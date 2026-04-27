@@ -5,27 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conversación con el Equipo</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
         }
         .container {
-            width: 100%;
-            max-width: 900px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            height: 85vh;
-            max-height: 750px;
-            overflow: hidden;
+            width: 100%; max-width: 900px; background: white;
+            border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; height: 85vh; max-height: 750px; overflow: hidden;
         }
         .header { padding: 18px 20px; border-bottom: 1px solid #e0e0e0; background: #f8f9fa; }
         .header h1 { font-size: 18px; color: #333; margin-bottom: 3px; }
@@ -35,12 +25,11 @@
             flex: 1; overflow-y: auto; padding: 20px;
             display: flex; flex-direction: column; gap: 14px; background: #fafafa;
         }
-        .msg { display: flex; flex-direction: column; animation: slideIn 0.25s ease-out; }
-        @keyframes slideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .msg { display: flex; flex-direction: column; }
         .msg.user { align-items: flex-end; }
         .msg.bot  { align-items: flex-start; }
-        .msg .who { font-size: 11px; font-weight: 600; color: #aaa; margin-bottom: 4px; padding: 0 4px; }
-        .msg .bubble {
+        .who { font-size: 11px; font-weight: 600; color: #aaa; margin-bottom: 4px; padding: 0 4px; }
+        .bubble {
             max-width: 70%; padding: 12px 16px; border-radius: 12px;
             font-size: 14px; line-height: 1.55; word-wrap: break-word; white-space: pre-wrap;
         }
@@ -48,14 +37,13 @@
         .msg.bot  .bubble { background: white; color: #333; border: 1px solid #e0e0e0; }
         .typing { display:flex; align-items:center; gap:5px; padding:12px 16px; background:white; border:1px solid #e0e0e0; border-radius:12px; width:fit-content; }
         .typing span { width:7px; height:7px; background:#999; border-radius:50%; animation:bounce 1.2s infinite; }
-        .typing span:nth-child(2) { animation-delay:0.2s; }
-        .typing span:nth-child(3) { animation-delay:0.4s; }
-        @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
-        .attitude-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:14px; }
+        .typing span:nth-child(2){animation-delay:0.2s}
+        .typing span:nth-child(3){animation-delay:0.4s}
+        @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+        .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:14px; }
         .att-btn {
-            padding: 16px 12px; background: white; border: 2px solid #e0e0e0;
-            border-radius: 10px; cursor: pointer; text-align: center;
-            transition: all 0.25s; font-family: inherit;
+            padding:16px 12px; background:white; border:2px solid #e0e0e0;
+            border-radius:10px; cursor:pointer; text-align:center; transition:all 0.25s; font-family:inherit;
         }
         .att-btn:hover { border-color:#667eea; background:#f5f5ff; }
         .att-btn:disabled { opacity:0.5; cursor:default; }
@@ -73,13 +61,13 @@
             padding:11px 22px; background:#667eea; color:white; border:none;
             border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; font-family:inherit;
         }
-        .send-btn:hover:not(:disabled) { background:#764ba2; }
-        .send-btn:disabled { background:#ccc; cursor:not-allowed; }
+        .send-btn:hover:not(:disabled){background:#764ba2}
+        .send-btn:disabled{background:#ccc;cursor:not-allowed}
         .reset-btn {
             padding:11px 14px; background:#f0f0f0; color:#555; border:none;
             border-radius:8px; font-size:13px; cursor:pointer; font-family:inherit;
         }
-        .reset-btn:hover { background:#e0e0e0; }
+        .reset-btn:hover{background:#e0e0e0}
     </style>
 </head>
 <body>
@@ -107,43 +95,35 @@ let history    = [];
 
 const attitudes = {
     easy: {
-        emoji: '😊', name: 'Solidario/a', sub: 'Apoya pero tiene preguntas',
-        system: `Estás jugando el rol de un/a miembro del equipo en una conversación real con tu jefe/a directo/a. Tu actitud es SOLIDARIA pero CURIOSA.
-
-Cómo comportarte:
-- Hablas de forma casual y natural, como una persona real del equipo. Primera persona siempre.
-- Cuando tu jefe cuenta algo, escuchas y respondes con una sola pregunta concreta.
-- Si propone un acuerdo, lo apoyás pero hacés UNA pregunta: ¿cómo saben que funcionó? ¿quién lo garantiza? ¿qué pasa si alguien no puede? ¿cada cuánto lo revisan?
-- Nunca hacés dos preguntas a la vez. Esperás la respuesta y seguís.
-- Tono cálido. "claro, tiene sentido, pero...", "entiendo, y si...".
-- NUNCA digas "los 5 elementos" ni uses términos de gestión. Sos un colega normal.
-- Cuando todo está claro, decís: "ok, me parece bien. Lo llevamos al equipo".
+        emoji:'😊', name:'Solidario/a', sub:'Apoya pero tiene preguntas',
+        system:`Estás en el rol de un/a colaborador/a hablando con tu jefe/a directo/a. Tu actitud es SOLIDARIA y CURIOSA.
+- Eres una persona real del equipo. Primera persona, tono casual.
+- Cuando tu jefe propone algo, apoyás pero hacés UNA sola pregunta concreta: ¿cómo saben que funcionó? ¿quién lo garantiza? ¿qué pasa si alguien no puede? ¿cada cuánto lo revisan?
+- Nunca dos preguntas a la vez.
+- Tono cálido: "claro, tiene sentido, pero...", "entiendo, y si...".
+- NUNCA uses términos de gestión ni listes elementos. Sos un colega normal.
+- Cuando todo esté claro, decís: "ok, me parece bien. Lo llevamos al equipo".
 - Máximo 2-3 líneas por respuesta.`
     },
     medium: {
-        emoji: '🤔', name: 'Reflexivo/a', sub: 'Cuestiona de forma balanceada',
-        system: `Estás jugando el rol de un/a miembro del equipo en una conversación real con tu jefe/a directo/a. Tu actitud es REFLEXIVA y algo ESCÉPTICA.
-
-Cómo comportarte:
-- Hablas de forma directa y honesta, como una persona real con tu propia perspectiva.
-- Cuando tu jefe propone algo, señalás lo que no te cierra con UNA pregunta concreta por turno.
-- No aceptás respuestas vagas. Pedís precisión.
-- Tono profesional pero directo. "no me queda del todo claro", "eso me preocupa un poco", "¿y si...?".
-- NUNCA digas "los 5 elementos" ni uses términos de gestión. Sos un colega normal.
-- Cuando todo está claro, decís: "bueno, así tiene más sentido. Puedo sostenerlo con el equipo".
-- Máximo 2-3 líneas por respuesta.`
+        emoji:'🤔', name:'Reflexivo/a', sub:'Cuestiona de forma balanceada',
+        system:`Estás en el rol de un/a colaborador/a hablando con tu jefe/a directo/a. Tu actitud es REFLEXIVA y algo ESCÉPTICA.
+- Eres una persona real del equipo. Primera persona, directo y honesto.
+- Cuando tu jefe propone algo, señalás UNA cosa que no te cierra por turno. No aceptás respuestas vagas.
+- "no me queda del todo claro", "eso me preocupa un poco", "¿y si...?".
+- NUNCA uses términos de gestión ni listes elementos. Sos un colega normal.
+- Cuando todo esté claro: "bueno, así tiene más sentido. Puedo sostenerlo con el equipo".
+- Máximo 2-3 líneas.`
     },
     hard: {
-        emoji: '🎯', name: 'Directo/a', sub: 'Cuestiona sin filtros',
-        system: `Estás jugando el rol de un/a miembro del equipo en una conversación real con tu jefe/a directo/a. Tu actitud es DIRECTA y EXIGENTE.
-
-Cómo comportarte:
-- Hablas de forma franca. Decís lo que pensás, con respeto pero sin rodeos.
-- Cuando tu jefe propone algo, lo cuestionás fuerte con UNA pregunta directa por turno. No aceptás vaguedades.
-- "no me cierra", "eso es muy vago", "necesito que seas más específico/a", "¿y si no se cumple, qué?".
-- NUNCA digas "los 5 elementos" ni uses términos de gestión. Sos un colega normal.
-- Solo cuando todo esté claro, decís: "ok, ahora sí me convence. Podemos llevarlo".
-- Máximo 2-3 líneas por respuesta.`
+        emoji:'🎯', name:'Directo/a', sub:'Cuestiona sin filtros',
+        system:`Estás en el rol de un/a colaborador/a hablando con tu jefe/a directo/a. Tu actitud es DIRECTA y EXIGENTE.
+- Eres una persona real del equipo. Primera persona, franco sin rodeos, respetuoso.
+- Cuando tu jefe propone algo, hacés UNA pregunta directa y exigente. No aceptás vaguedades.
+- "no me cierra", "eso es muy vago", "¿y si no se cumple qué pasa?", "¿quién específicamente?".
+- NUNCA uses términos de gestión ni listes elementos. Sos un colega normal.
+- Solo cuando todo esté claro: "ok, ahora sí me convence. Podemos llevarlo".
+- Máximo 2-3 líneas.`
     }
 };
 
@@ -153,62 +133,52 @@ const greeting = {
     hard:   "Hola, me llamaste. ¿Qué pasa?"
 };
 
-async function callClaude(messages, systemPrompt) {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+async function callAPI(msgs, sys) {
+    const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
             max_tokens: 200,
-            system: systemPrompt,
-            messages: messages
+            system: sys,
+            messages: msgs
         })
     });
-    if (!res.ok) throw new Error('API error');
-    const data = await res.json();
-    return data.content?.[0]?.text || "...";
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    return d.content?.[0]?.text || "...";
 }
 
 function showTyping() {
-    const wrap = document.createElement('div');
-    wrap.className = 'msg bot'; wrap.id = 'typing';
+    const w = document.createElement('div');
+    w.className = 'msg bot'; w.id = 'typing';
     const who = document.createElement('div');
     who.className = 'who'; who.textContent = 'Compañero/a';
     const t = document.createElement('div');
-    t.className = 'typing';
-    t.innerHTML = '<span></span><span></span><span></span>';
-    wrap.appendChild(who); wrap.appendChild(t);
-    chatArea.appendChild(wrap);
-    chatArea.scrollTop = chatArea.scrollHeight;
+    t.className = 'typing'; t.innerHTML = '<span></span><span></span><span></span>';
+    w.appendChild(who); w.appendChild(t);
+    chatArea.appendChild(w); chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-function hideTyping() {
-    const t = document.getElementById('typing');
-    if (t) t.remove();
-}
+function hideTyping() { const t=document.getElementById('typing'); if(t)t.remove(); }
 
 function addMsg(role, text) {
-    const wrap = document.createElement('div');
-    wrap.className = `msg ${role === 'user' ? 'user' : 'bot'}`;
+    const w = document.createElement('div');
+    w.className = `msg ${role==='user'?'user':'bot'}`;
     const who = document.createElement('div');
-    who.className = 'who';
-    who.textContent = role === 'user' ? 'Tú (Jefatura)' : 'Compañero/a';
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.textContent = text;
-    wrap.appendChild(who); wrap.appendChild(bubble);
-    chatArea.appendChild(wrap);
-    chatArea.scrollTop = chatArea.scrollHeight;
+    who.className = 'who'; who.textContent = role==='user'?'Tú (Jefatura)':'Compañero/a';
+    const b = document.createElement('div');
+    b.className = 'bubble'; b.textContent = text;
+    w.appendChild(who); w.appendChild(b);
+    chatArea.appendChild(w); chatArea.scrollTop = chatArea.scrollHeight;
 }
 
 async function setAttitude(level) {
     difficulty = level;
-    const att = attitudes[level];
-    modeLabel.textContent = `${att.emoji} ${att.name}`;
-    msgInput.disabled = false;
-    sendBtn.disabled = false;
+    modeLabel.textContent = `${attitudes[level].emoji} ${attitudes[level].name}`;
+    msgInput.disabled = false; sendBtn.disabled = false;
     const first = greeting[level];
-    history.push({ role: 'assistant', content: first });
+    history.push({ role:'assistant', content:first });
     addMsg('bot', first);
     msgInput.focus();
 }
@@ -216,60 +186,41 @@ async function setAttitude(level) {
 async function sendMessage() {
     const text = msgInput.value.trim();
     if (!text || !difficulty) return;
-    msgInput.value = '';
-    msgInput.disabled = true;
-    sendBtn.disabled = true;
+    msgInput.value = ''; msgInput.disabled = true; sendBtn.disabled = true;
     addMsg('user', text);
-    history.push({ role: 'user', content: text });
+    history.push({ role:'user', content:text });
     showTyping();
     try {
-        const reply = await callClaude(history, attitudes[difficulty].system);
-        hideTyping();
-        addMsg('bot', reply);
-        history.push({ role: 'assistant', content: reply });
-    } catch (e) {
-        hideTyping();
-        addMsg('bot', 'Error de conexión. Intenta de nuevo.');
+        const reply = await callAPI(history, attitudes[difficulty].system);
+        hideTyping(); addMsg('bot', reply);
+        history.push({ role:'assistant', content:reply });
+    } catch(e) {
+        hideTyping(); addMsg('bot', 'Error al conectar. Intenta de nuevo.');
     }
-    msgInput.disabled = false;
-    sendBtn.disabled = false;
-    msgInput.focus();
+    msgInput.disabled = false; sendBtn.disabled = false; msgInput.focus();
 }
 
 function selectAttitude() {
-    const wrap = document.createElement('div');
-    wrap.className = 'msg bot';
-    const label = document.createElement('div');
-    label.style.cssText = 'font-size:14px;color:#555;margin-bottom:10px;';
-    label.textContent = 'Elige la actitud de tu contraparte:';
-    const grid = document.createElement('div');
-    grid.className = 'attitude-grid';
+    const w = document.createElement('div'); w.className = 'msg bot';
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:14px;color:#555;margin-bottom:10px;';
+    lbl.textContent = 'Elige la actitud de tu contraparte:';
+    const grid = document.createElement('div'); grid.className = 'grid';
     Object.entries(attitudes).forEach(([key, att]) => {
-        const btn = document.createElement('button');
-        btn.className = 'att-btn';
+        const btn = document.createElement('button'); btn.className = 'att-btn';
         btn.innerHTML = `<span class="ico">${att.emoji}</span><div class="name">${att.name}</div><div class="sub">${att.sub}</div>`;
-        btn.onclick = () => {
-            grid.querySelectorAll('.att-btn').forEach(b => b.disabled = true);
-            setAttitude(key);
-        };
+        btn.onclick = () => { grid.querySelectorAll('.att-btn').forEach(b=>b.disabled=true); setAttitude(key); };
         grid.appendChild(btn);
     });
-    wrap.appendChild(label); wrap.appendChild(grid);
-    chatArea.appendChild(wrap);
-    chatArea.scrollTop = chatArea.scrollHeight;
+    w.appendChild(lbl); w.appendChild(grid); chatArea.appendChild(w); chatArea.scrollTop=chatArea.scrollHeight;
 }
 
 function resetChat() {
-    chatArea.innerHTML = '';
-    msgInput.value = ''; msgInput.disabled = true; sendBtn.disabled = true;
-    modeLabel.textContent = ''; difficulty = null; history = [];
-    selectAttitude();
+    chatArea.innerHTML=''; msgInput.value=''; msgInput.disabled=true; sendBtn.disabled=true;
+    modeLabel.textContent=''; difficulty=null; history=[]; selectAttitude();
 }
 
-msgInput.addEventListener('keypress', e => {
-    if (e.key === 'Enter' && !msgInput.disabled) sendMessage();
-});
-
+msgInput.addEventListener('keypress', e => { if(e.key==='Enter'&&!msgInput.disabled) sendMessage(); });
 window.addEventListener('load', selectAttitude);
 </script>
 </body>
