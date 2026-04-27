@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversación difícil</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #181818;
+    --surface2: #222222;
+    --border: #2e2e2e;
+    --border2: #3a3a3a;
+    --text: #e8e4dc;
+    --text-muted: #6b6b6b;
+    --text-dim: #444;
+    --accent: #c8a96e;
+    --accent-dim: rgba(200,169,110,0.12);
+    --user-bg: #1a1a1a;
+    --user-border: #2e2e2e;
+    --bot-bg: #161616;
+    --radius: 3px;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 680px;
+    height: 90vh;
+    max-height: 760px;
+    display: flex;
+    flex-direction: column;
+    border: 0.5px solid var(--border);
+    background: var(--surface);
+    position: relative;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+
+  .avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0;
+  }
+
+  .status-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4a9e6b;
+    border: 1.5px solid var(--bg);
+  }
+
+  .header-info { flex: 1; }
+
+  .header-name {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+
+  .header-role {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .header-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 0.5px solid rgba(200,169,110,0.25);
+    padding: 3px 8px;
+    border-radius: var(--radius);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Messages */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 20px;
+  }
+
+  .msg-group.user { align-items: flex-end; }
+  .msg-group.bot { align-items: flex-start; }
+
+  .msg-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    padding: 0 2px;
+  }
+
+  .bubble {
+    max-width: 82%;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.65;
+    border-radius: var(--radius);
+  }
+
+  .bot .bubble {
+    background: var(--bot-bg);
+    border: 0.5px solid var(--border);
+    color: var(--text);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  .user .bubble {
+    background: var(--user-bg);
+    border: 0.5px solid var(--user-border);
+    color: #b0a898;
+    border-right: 2px solid #3a3a3a;
+    border-radius: var(--radius) 0 0 var(--radius);
+  }
+
+  /* Typing */
+  .typing-dots {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--bot-bg);
+    border: 0.5px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    width: fit-content;
+  }
+
+  .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.4;
+    animation: pulse 1.2s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 60%, 100% { opacity: 0.25; transform: scale(1); }
+    30% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* Input */
+  .input-area {
+    flex-shrink: 0;
+    border-top: 0.5px solid var(--border);
+    background: var(--bg);
+    padding: 14px 20px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .input-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding-bottom: 10px;
+    flex-shrink: 0;
+  }
+
+  textarea {
+    flex: 1;
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    resize: none;
+    min-height: 42px;
+    max-height: 120px;
+    transition: border-color 0.15s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  textarea::placeholder { color: var(--text-dim); }
+
+  button.send-btn {
+    background: transparent;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    height: 42px;
+    letter-spacing: 0.05em;
+  }
+
+  button.send-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+  button.send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Footer hint */
+  .footer-hint {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    padding: 6px 20px 10px;
+    background: var(--bg);
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="header">
+    <div class="avatar-wrap">
+      <div class="avatar" id="avatarInitial">—</div>
+      <div class="status-dot"></div>
+    </div>
+    <div class="header-info">
+      <div class="header-name" id="botName">…</div>
+      <div class="header-role">Colega · Equipo directo</div>
+    </div>
+    <div class="header-tag">simulación</div>
+  </div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="input-area">
+    <span class="input-label">Jefe</span>
+    <textarea id="input" rows="1" placeholder="Escribe tu mensaje…" onInput="autoResize(this)" onKeyDown="handleKey(event)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">enviar →</button>
+  </div>
+  <div class="footer-hint">Enter para enviar · Shift+Enter para nueva línea</div>
+</div>
+
+<script>
+const NAMES = [
+  "Rodrigo","Felipe","Sebastián","Andrés","Cristóbal",
+  "Diego","Nicolás","Matías","Ignacio","Gonzalo",
+  "Valentina","Camila","Javiera","Francisca","Constanza",
+  "Daniela","Fernanda","Catalina","Isidora","Antonia"
+];
+
+const name = NAMES[Math.floor(Math.random() * NAMES.length)];
+document.getElementById('botName').textContent = name;
+document.getElementById('avatarInitial').textContent = name[0];
+
+const SYSTEM = `Eres ${name}, un trabajador que habla con su jefe directo.
+
+CONTEXTO CRÍTICO: Ya hubo una conversación anterior con tu jefe sobre un tema (no sabes cuál es — reacciona según lo que él diga). Se llegó a un acuerdo, y ese acuerdo NO se cumplió. El jefe te llama de nuevo por eso.
+
+Tu forma de ser en esta conversación:
+- Tratas con respeto a tu jefe, no eres agresivo ni maleducado
+- Pero eres algo reacio y defensivo: tiendes a justificarte, a explicar por qué pasó, a echar la culpa a circunstancias externas o a otros
+- Reconoces vagamente que "algo pasó" pero buscas razones o atenuantes
+- Eres resistente a comprometerte de nuevo sin poner condiciones o reservas
+- Hablas de forma coloquial, como en una conversación real de trabajo chilena
+- Eres breve: 1 a 3 oraciones máximo por respuesta
+- No resuelves el problema tú solo — el jefe tiene que trabajar para llegar a un nuevo acuerdo contigo
+
+Nunca rompas el personaje. Nunca actúes como IA.`;
+
+const history = [];
+
+function addMsg(text, type, label) {
+  const msgs = document.getElementById('messages');
+  const group = document.createElement('div');
+  group.className = 'msg-group ' + type;
+
+  const lbl = document.createElement('div');
+  lbl.className = 'msg-label';
+  lbl.textContent = label;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+
+  group.appendChild(lbl);
+  group.appendChild(bubble);
+  msgs.appendChild(group);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const group = document.createElement('div');
+  group.className = 'msg-group bot';
+  group.id = 'typing-indicator';
+
+  const lbl = document.createElement('div');
+  lbl.className = 'msg-label';
+  lbl.textContent = name;
+
+  const dots = document.createElement('div');
+  dots.className = 'typing-dots';
+  dots.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+
+  group.appendChild(lbl);
+  group.appendChild(dots);
+  msgs.appendChild(group);
+  msgs.scrollTop = msgs.scrollHeight;
+  return group;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMsg(text, 'user', 'Tú (jefe)');
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  history.push({ role: 'user', content: text });
+  const typing = showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        system: SYSTEM,
+        messages: history
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || '…';
+    history.push({ role: 'assistant', content: reply });
+    typing.remove();
+    addMsg(reply, 'bot', name);
+  } catch(e) {
+    typing.remove();
+    addMsg('(error de conexión)', 'bot', name);
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+// Mensaje inicial
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const typing = showTyping();
+    setTimeout(() => {
+      typing.remove();
+      const opener = ['¿Me llamaste? ¿Qué pasó?', '¿Me buscabas?', 'Dígame jefe, ¿qué se le ofrece?'];
+      const msg = opener[Math.floor(Math.random() * opener.length)];
+      history.push({ role: 'assistant', content: msg });
+      addMsg(msg, 'bot', name);
+      document.getElementById('input').focus();
+    }, 1000);
+  }, 400);
+});
+</script>
+</body>
+</html>
