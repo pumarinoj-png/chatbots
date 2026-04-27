@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot de Acuerdos de Trabajo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+            max-height: 700px;
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .header p {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message.bot {
+            justify-content: flex-start;
+        }
+        
+        .bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .user .bubble {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+        
+        .bot .bubble {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 2px;
+        }
+        
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .input-group {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .reset-btn {
+            background: #999;
+            padding: 10px 14px;
+            font-size: 13px;
+        }
+        
+        .reset-btn:hover {
+            background: #777;
+        }
+        
+        .qr-section {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .qr-section h3 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        #qrCode {
+            margin: 20px auto;
+        }
+        
+        .qr-url {
+            margin-top: 15px;
+            padding: 12px;
+            background: white;
+            border: 1px dashed #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        
+        .context-badge {
+            display: inline-block;
+            background: #fff3cd;
+            color: #856404;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💼 Colaborador(a) de Acuerdos</h1>
+            <p>Dialogue constructivamente sobre los acuerdos de trabajo de tu equipo</p>
+        </div>
+        
+        <div class="chat-area" id="chatArea"></div>
+        
+        <div class="input-area">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    placeholder="Escribe tu mensaje..."
+                    autocomplete="off"
+                >
+                <button onclick="sendMessage()" id="sendBtn">Enviar</button>
+            </div>
+            <button class="reset-btn" onclick="resetChat()">Reiniciar</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        
+        // Estados del chatbot
+        const STATES = {
+            GREETING: 'greeting',
+            LISTEN: 'listen',
+            CHALLENGE: 'challenge',
+            ELEMENTS_MISSING: 'missing_elements',
+            VALIDATION: 'validation',
+            SUCCESS: 'success'
+        };
+        
+        let chatState = {
+            currentState: STATES.GREETING,
+            topic: null,
+            agreement: null,
+            presentedElements: {
+                resultado: false,
+                responsable: false,
+                recursos: false,
+                interdependencia: false,
+                seguimiento: false
+            },
+            missingElements: [],
+            difficulty: 'medium', // easy, medium, hard
+            conversationTurns: 0
+        };
+        
+        const attitudes = {
+            easy: {
+                name: '😊 Colaborador amable',
+                description: 'Apoya y facilita la conversación'
+            },
+            medium: {
+                name: '🤔 Colaborador reflexivo',
+                description: 'Cuestiona constructivamente pero se deja convencer'
+            },
+            hard: {
+                name: '🎯 Colaborador crítico',
+                description: 'Desafía y exige argumentos sólidos'
+            }
+        };
+        
+        // Respuestas del bot según estado
+        const botResponses = {
+            greeting: [
+                "¡Hola! Soy tu colaborador(a) en la construcción de acuerdos de equipo. Estoy aquí para ayudarte a pensar mejor los temas que enfrenta tu equipo.",
+                "\nAntes de comenzar, ¿cuál es el conflicto o tema que necesitas abordar con tu equipo híbrido?",
+                "\n📋 Ten en cuenta que a medida que presentes el acuerdo, estaré validando que incluyas estos 5 elementos clave: resultado esperado, responsable, recursos, interdependencia y seguimiento."
+            ],
+            listened: [
+                "Entiendo. Ese es un tema importante en equipos híbridos.",
+                "\nDécime: ¿ya tienes en mente un acuerdo o regla para abordar esto? O ¿estamos buscando construirlo juntos?"
+            ],
+            presentAgreement: [
+                "Perfecto. Escucho.",
+                "\nPresenta tu propuesta de acuerdo. Mientras lo haces, estaré pendiente de que cubra los elementos necesarios para que sea efectivo."
+            ],
+            challenge: {
+                easy: "Interesante propuesta. ¿Hay algo más que quieras agregar?",
+                medium: "Veo que has cubierto algunos puntos, pero tengo algunas preguntas. ¿Cómo asegurarán que esto realmente se cumpla? ¿Quién es responsable de que funcione?",
+                hard: "Escucha, esto está incompleto. Dime: ¿quién es específicamente el responsable de que esto funcione? ¿Cuál es el resultado que esperas ver realmente? Y lo más importante: ¿cómo van a dar seguimiento para saber si funcionó o no?"
+            },
+            validation: {
+                easy: "Veo que cubriste todos los elementos. ¡Excelente acuerdo!",
+                medium: "Bien. Cubriste lo principal. Este acuerdo tiene estructura.",
+                hard: "Listo. Finalmente cubriste lo esencial. Ahora el equipo tiene claridad."
+            }
+        };
+        
+        // Función para seleccionar actitud al inicio
+        function selectAttitude() {
+            const options = Object.keys(attitudes).map(key => 
+                `<button style="margin: 8px; padding: 10px 16px; cursor: pointer; border: 1px solid #ddd; background: white; border-radius: 6px;" onclick="setAttitude('${key}')">${attitudes[key].name}</button>`
+            ).join('');
+            
+            addBotMessage("¿Con qué actitud prefieres que te ayude hoy?", false);
+            const optionsDiv = document.createElement('div');
+            optionsDiv.innerHTML = options;
+            optionsDiv.style.padding = '12px 0';
+            chatArea.appendChild(optionsDiv);
+            focusInput();
+        }
+        
+        function setAttitude(level) {
+            chatState.difficulty = level;
+            document.querySelectorAll('.input-area button').forEach(btn => btn.disabled = false);
+            messageInput.disabled = false;
+            
+            addBotMessage(`Perfecto. Seré un ${attitudes[level].name.toLowerCase()}. Vamos a construir un buen acuerdo.\n\n¿Cuál es el conflicto o tema que necesita un acuerdo en tu equipo?`);
+            chatState.currentState = STATES.LISTEN;
+            focusInput();
+        }
+        
+        // Análisis de elementos en el mensaje
+        function analyzeAgreement(text) {
+            const lowercase = text.toLowerCase();
+            
+            // Detectar elementos clave
+            const keywords = {
+                resultado: ['resultado', 'esperado', 'criterio', 'observable', 'meta', 'objetivo', 'cuando', 'si podemos', 'se vea'],
+                responsable: ['responsable', 'líder', 'liderará', 'cargo', 'encargado', 'quien', 'responsabilidad'],
+                recursos: ['recursos', 'elementos', 'herramientas', 'materiales', 'presupuesto', 'con qué', 'software', 'plataforma'],
+                interdependencia: ['interdependencia', 'áreas', 'involucradas', 'causa efecto', 'relación', 'depende', 'impacta'],
+                seguimiento: ['seguimiento', 'monitoreo', 'revisión', 'cada cuánto', 'frecuencia', 'tracking', 'medición', 'validar']
+            };
+            
+            const detected = {};
+            Object.keys(keywords).forEach(element => {
+                detected[element] = keywords[element].some(keyword => lowercase.includes(keyword));
+            });
+            
+            return detected;
+        }
+        
+        // Enviar mensaje
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+            
+            addUserMessage(text);
+            messageInput.value = '';
+            messageInput.focus();
+            chatState.conversationTurns++;
+            
+            // Procesar según estado
+            setTimeout(() => {
+                if (chatState.currentState === STATES.LISTEN) {
+                    handleTopic(text);
+                } else if (chatState.currentState === STATES.CHALLENGE) {
+                    handleAgreement(text);
+                }
+            }, 500);
+        }
+        
+        function handleTopic(text) {
+            chatState.topic = text;
+            addBotMessage("Perfecto. Ese es el tema sobre el que trabajaremos.\n\nAhora, ¿qué acuerdo o regla propones para resolverlo? Sé específico/a en tu respuesta.");
+            chatState.currentState = STATES.CHALLENGE;
+            focusInput();
+        }
+        
+        function handleAgreement(text) {
+            chatState.agreement = text;
+            const detected = analyzeAgreement(text);
+            
+            // Verificar qué falta
+            chatState.presentedElements = detected;
+            chatState.missingElements = Object.keys(detected).filter(el => !detected[el]);
+            
+            if (chatState.missingElements.length > 0) {
+                respondToIncomplete(detected);
+            } else {
+                respondToComplete(detected);
+            }
+        }
+        
+        function respondToIncomplete(detected) {
+            const missing = chatState.missingElements;
+            const displayNames = {
+                resultado: 'Resultado esperado (criterio observable)',
+                responsable: 'Responsable (quién liderará)',
+                recursos: 'Recursos (elementos disponibles)',
+                interdependencia: 'Interdependencia (áreas involucradas)',
+                seguimiento: 'Seguimiento (frecuencia de revisión)'
+            };
+            
+            let response = '';
+            
+            if (chatState.difficulty === 'easy') {
+                response = `Buena propuesta. Veo que podrías detallar un poco más:\n\n`;
+                missing.forEach(el => {
+                    response += `• ${displayNames[el]}\n`;
+                });
+                response += `\n¿Podrías agregar estos detalles?`;
+            } else if (chatState.difficulty === 'medium') {
+                response = `Entiendo tu propuesta, pero veo que faltan elementos importantes:\n\n`;
+                missing.forEach(el => {
+                    response += `• ${displayNames[el]}\n`;
+                });
+                response += `\nSin estos detalles, cuando le presentes esto al equipo, te harán preguntas que no podrás responder. ¿Quieres completarlo ahora?`;
+            } else {
+                response = `Espera. Esto no es suficiente. Me dices qué quieres, pero no cómo. Faltan:\n\n`;
+                missing.forEach(el => {
+                    response += `• ${displayNames[el]}\n`;
+                });
+                response += `\nSi llegas a una reunión de equipo con esto, te van a cuestionar cada punto. ¿Realmente está listo, o necesitas pensar más?`;
+            }
+            
+            addBotMessage(response);
+            
+            const badge = document.createElement('div');
+            badge.className = 'context-badge';
+            badge.textContent = `Elementos faltantes: ${missing.join(', ')}`;
+            chatArea.lastElementChild.appendChild(badge);
+            
+            focusInput();
+        }
+        
+        function respondToComplete(detected) {
+            let response = botResponses.validation[chatState.difficulty];
+            response += '\n\n✅ Tu acuerdo tiene estructura. Tiene claridad sobre:\n';
+            
+            if (detected.resultado) response += '• Qué resultado esperas (criterio observable)\n';
+            if (detected.responsable) response += '• Quién es responsable de hacerlo realidad\n';
+            if (detected.recursos) response += '• Con qué recursos cuentas\n';
+            if (detected.interdependencia) response += '• Cómo impacta a otras áreas\n';
+            if (detected.seguimiento) response += '• Cómo validarán que está funcionando\n';
+            
+            response += '\n🎯 Esto está listo para presentar al equipo. ¿Hay algo más que quieras refinar?';
+            
+            addBotMessage(response);
+            chatState.currentState = STATES.SUCCESS;
+            focusInput();
+        }
+        
+        // Agregar mensaje a la UI
+        function addUserMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message user';
+            msgDiv.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+            chatArea.appendChild(msgDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        function addBotMessage(text, showTimestamp = true) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message bot';
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = text;
+            msgDiv.appendChild(bubble);
+            
+            if (showTimestamp) {
+                const time = document.createElement('div');
+                time.className = 'timestamp';
+                time.textContent = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+                msgDiv.appendChild(time);
+            }
+            
+            chatArea.appendChild(msgDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        function focusInput() {
+            messageInput.focus();
+        }
+        
+        function resetChat() {
+            chatArea.innerHTML = '';
+            messageInput.value = '';
+            chatState = {
+                currentState: STATES.GREETING,
+                topic: null,
+                agreement: null,
+                presentedElements: {
+                    resultado: false,
+                    responsable: false,
+                    recursos: false,
+                    interdependencia: false,
+                    seguimiento: false
+                },
+                missingElements: [],
+                difficulty: 'medium',
+                conversationTurns: 0
+            };
+            selectAttitude();
+        }
+        
+        // Utilidades
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Enter para enviar
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Iniciar
+        window.addEventListener('load', () => {
+            selectAttitude();
+        });
+    </script>
+</body>
+</html>
