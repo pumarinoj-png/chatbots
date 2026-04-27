@@ -296,9 +296,9 @@
         
         // Respuestas de apertura
         const openingLines = {
-            easy: "¿Cuéntame qué tema tenés en mente? ¿Qué es lo que no está funcionando en el equipo?",
-            medium: "Perfecto. Dime, ¿cuál es el problema específico que querés resolver?",
-            hard: "Dale. ¿Cuál es el tema? Cuéntame qué está pasando en el equipo."
+            easy: "Hola, me llamaste. ¿Qué hay? ¿Cuál es el tema?",
+            medium: "Hola, me llamaste. Cuéntame, ¿qué necesitás conversar?",
+            hard: "Hola, me llamaste. Dime, ¿cuál es el tema?"
         };
         
         // Respuestas a propuestas según actitud
@@ -423,7 +423,7 @@
         }
         
         function selectAttitude() {
-            addBotMessage("¿Cuál es tu estilo? Así sé cómo cuestionarte:");
+            addBotMessage("Elige la actitud de tu contraparte:");
             
             const optionsDiv = document.createElement('div');
             optionsDiv.className = 'attitude-selection';
