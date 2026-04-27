@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso al Chatbot de Acuerdos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .qr-wrapper {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+        
+        #qrCode {
+            display: inline-block;
+        }
+        
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .features {
+            text-align: left;
+            margin: 30px 0;
+        }
+        
+        .features h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .feature-item {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .feature-item::before {
+            content: "✓";
+            color: #667eea;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .instructions {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            text-align: left;
+            margin: 30px 0;
+        }
+        
+        .instructions h4 {
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .direct-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+        
+        .direct-link:hover {
+            background: #764ba2;
+        }
+        
+        .url-display {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 11px;
+            color: #666;
+            word-break: break-all;
+            margin-top: 15px;
+        }
+        
+        .footer {
+            font-size: 12px;
+            color: #999;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💼 Chatbot de Acuerdos</h1>
+        <p class="subtitle">Construye acuerdos de trabajo más sólidos con feedback colaborativo</p>
+        
+        <div class="qr-wrapper">
+            <div id="qrCode"></div>
+        </div>
+        
+        <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Escanea el código QR con tu teléfono</p>
+        
+        <a href="https://chatbot-acuerdos.vercel.app" class="direct-link">Acceder al chatbot →</a>
+        
+        <div class="url-display">
+            https://chatbot-acuerdos.vercel.app
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div class="features">
+            <h3>¿Cómo funciona?</h3>
+            <div class="feature-item">Elige una actitud colaborativa (amable, reflexiva o crítica)</div>
+            <div class="feature-item">Presenta el tema o conflicto de tu equipo</div>
+            <div class="feature-item">Propón un acuerdo o regla de trabajo</div>
+            <div class="feature-item">Recibe feedback sobre 5 elementos clave</div>
+            <div class="feature-item">Refina hasta tener un acuerdo sólido</div>
+        </div>
+        
+        <div class="instructions">
+            <h4>📋 Los 5 elementos validados:</h4>
+            <ol>
+                <li><strong>Resultado esperado:</strong> Criterio observable y medible</li>
+                <li><strong>Responsable:</strong> Quién liderará el desafío</li>
+                <li><strong>Recursos:</strong> Con qué elementos se lleva a cabo</li>
+                <li><strong>Interdependencia:</strong> Áreas involucradas y causa-efecto</li>
+                <li><strong>Seguimiento:</strong> Cómo y cada cuánto se revisa</li>
+            </ol>
+        </div>
+        
+        <div class="footer">
+            💡 Ideal para equipos híbridos que quieren construir acuerdos robustos<br>
+            Comparte este código QR con tu equipo
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        // Generar QR (reemplaza con tu URL real)
+        const qrUrl = "https://chatbot-acuerdos.vercel.app";
+        
+        new QRCode(document.getElementById("qrCode"), {
+            text: qrUrl,
+            width: 200,
+            height: 200,
+            colorDark: "#667eea",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    </script>
+</body>
+</html>
