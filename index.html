@@ -60,29 +60,50 @@
         .divider hr { flex: 1; border: none; border-top: 1px dashed #ddd; }
         .divider span { font-size: 11px; color: #bbb; white-space: nowrap; }
 
-        /* Modal de confirmación */
+        /* Modal de feedback */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.4); z-index: 100;
-            align-items: center; justify-content: center;
+            align-items: center; justify-content: center; overflow-y: auto;
         }
         .modal-overlay.visible { display: flex; }
         .modal {
             background: white; border-radius: 12px; padding: 28px 32px;
-            max-width: 380px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-            text-align: center;
+            max-width: 420px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            margin: 20px auto;
         }
-        .modal h3 { font-size: 16px; color: #333; margin-bottom: 10px; }
-        .modal p  { font-size: 13px; color: #777; line-height: 1.6; margin-bottom: 22px; }
-        .modal-btns { display: flex; gap: 10px; justify-content: center; }
+        .modal h3 { font-size: 16px; color: #333; margin-bottom: 16px; }
+        .score-item { margin-bottom: 16px; }
+        .score-label { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px; }
+        .score-number { font-size: 20px; color: #667eea; font-weight: 700; }
+        .score-feedback { font-size: 12px; color: #777; line-height: 1.5; margin-top: 4px; }
+        .general-score { background: #f5f5ff; padding: 14px; border-radius: 8px; margin: 16px 0; }
+        .general-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .general-number { font-size: 28px; color: #667eea; font-weight: 700; }
+        .tips { background: #fff9e6; padding: 12px; border-radius: 8px; margin: 16px 0; border-left: 3px solid #ffc107; }
+        .tips-title { font-size: 11px; font-weight: 600; color: #856404; text-transform: uppercase; margin-bottom: 6px; }
+        .tip { font-size: 12px; color: #666; margin-bottom: 6px; line-height: 1.5; }
+        .tip:last-child { margin-bottom: 0; }
+        .modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 22px; }
         .modal-btns button {
-            padding: 10px 20px; border: none; border-radius: 8px;
+            padding: 10px 18px; border: none; border-radius: 8px;
             font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
         }
-        .btn-confirm { background: #667eea; color: white; }
-        .btn-confirm:hover { background: #764ba2; }
-        .btn-cancel  { background: #f0f0f0; color: #555; }
-        .btn-cancel:hover  { background: #e0e0e0; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #764ba2; }
+        .btn-secondary { background: #f0f0f0; color: #555; }
+        .btn-secondary:hover { background: #e0e0e0; }
+
+        /* Modal de confirmación */
+        .confirm-modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4); z-index: 101;
+            align-items: center; justify-content: center;
+        }
+        .confirm-modal.visible { display: flex; }
+        .confirm-modal .modal {
+            max-width: 360px;
+        }
 
         .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:14px; }
         .att-btn {
@@ -102,12 +123,19 @@
         }
         input[type="text"]:focus { outline:none; border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,0.1); }
         input[type="text"]:disabled { background:#f5f5f5; }
+
+        .btn-group { display: flex; gap: 10px; }
         .send-btn {
-            padding:11px 22px; background:#667eea; color:white; border:none;
+            flex: 1; padding:11px 16px; background:#667eea; color:white; border:none;
             border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; transition: background 0.2s;
         }
         .send-btn:hover:not(:disabled){background:#764ba2}
         .send-btn:disabled{background:#ccc;cursor:not-allowed}
+        .feedback-btn {
+            padding:11px 16px; background:#f9a825; color:white; border:none;
+            border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; transition: background 0.2s;
+        }
+        .feedback-btn:hover { background:#f89e0d; }
         .reset-btn {
             padding:11px 14px; background:#f0f0f0; color:#555; border:none;
             border-radius:8px; font-size:13px; cursor:pointer; font-family:inherit;
@@ -117,14 +145,25 @@
 </head>
 <body>
 
-<!-- Modal de confirmación -->
-<div class="modal-overlay" id="modalOverlay">
+<!-- Modal de feedback -->
+<div class="modal-overlay" id="feedbackModal">
     <div class="modal">
-        <h3>¿Pasar a la Conversación 2?</h3>
-        <p>La primera conversación aún no ha terminado. Puedes continuar igualmente o quedarte aquí.</p>
+        <h3>📊 Evaluación de la conversación</h3>
+        <div id="feedbackContent"></div>
         <div class="modal-btns">
-            <button class="btn-cancel" onclick="closeModal()">Quedarme aquí</button>
-            <button class="btn-confirm" onclick="confirmPhase2()">Pasar igual</button>
+            <button class="btn-secondary" onclick="closeFeedback()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación (pasar a fase 2 o similar) -->
+<div class="confirm-modal" id="confirmModal">
+    <div class="modal">
+        <h3 id="confirmTitle">¿Pasar a la Conversación 2?</h3>
+        <p id="confirmMsg">La primera conversación aún no ha terminado. Puedes continuar igualmente.</p>
+        <div class="modal-btns">
+            <button class="btn-secondary" onclick="closeConfirm()">Quedarme aquí</button>
+            <button class="btn-primary" onclick="confirmAction()">Continuar</button>
         </div>
     </div>
 </div>
@@ -144,20 +183,25 @@
     <div class="chat-area" id="chatArea"></div>
 
     <div class="input-area">
-        <input type="text" id="msgInput" placeholder="Escribe tu mensaje..." disabled autocomplete="off">
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>Enviar</button>
-        <button class="reset-btn" onclick="resetChat()">Reiniciar</button>
+        <div class="btn-group">
+            <input type="text" id="msgInput" placeholder="Escribe tu mensaje..." disabled autocomplete="off">
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>Enviar</button>
+        </div>
+        <button class="feedback-btn" id="feedbackBtn" onclick="requestFeedback()" disabled title="Recibir evaluación">📊 Evaluar</button>
+        <button class="reset-btn" onclick="resetChat()">↻</button>
     </div>
 </div>
 
 <script>
-const chatArea    = document.getElementById('chatArea');
-const msgInput    = document.getElementById('msgInput');
-const sendBtn     = document.getElementById('sendBtn');
-const modeLabel   = document.getElementById('modeLabel');
-const tab1        = document.getElementById('tab1');
-const tab2        = document.getElementById('tab2');
-const modalOverlay = document.getElementById('modalOverlay');
+const chatArea      = document.getElementById('chatArea');
+const msgInput      = document.getElementById('msgInput');
+const sendBtn       = document.getElementById('sendBtn');
+const feedbackBtn   = document.getElementById('feedbackBtn');
+const modeLabel     = document.getElementById('modeLabel');
+const tab1          = document.getElementById('tab1');
+const tab2          = document.getElementById('tab2');
+const feedbackModal = document.getElementById('feedbackModal');
+const confirmModal  = document.getElementById('confirmModal');
 
 let difficulty  = null;
 let phase       = 1;
@@ -165,6 +209,7 @@ let phase1Done  = false;
 let history1    = [];
 let history2    = [];
 let sys2        = null;
+let pendingAction = null;
 
 const nonComplianceReasons = [
     'Se te olvidó cumplir el acuerdo. No fue intencional, se perdió entre otras prioridades. Al principio dices que "estabas en eso" o que "fue una semana complicada". Solo si te preguntan bien lo reconoces.',
@@ -176,8 +221,8 @@ const nonComplianceReasons = [
 
 const attitudes = {
     easy: {
-        emoji:'😊', name:'Solidario/a', sub:'Apoya pero tiene preguntas',
-        system1: `Eres un miembro del equipo hablando con tu jefe o jefa directa. Tu actitud es solidaria y curiosa.
+        emoji:'😊', name:'Actitud positiva', sub:'Apoya pero tiene preguntas',
+        system1: `Eres un miembro del equipo hablando con tu jefe o jefa directa. Tu actitud es positiva y curiosa.
 - Hablas en primera persona, de forma casual y natural. Eres una persona real.
 - Cuando tu jefe propone algo, lo apoyas pero haces UNA sola pregunta concreta cada vez.
 - Nunca hagas dos preguntas a la vez. Espera la respuesta antes de seguir.
@@ -187,7 +232,7 @@ const attitudes = {
 - Máximo 2-3 líneas por respuesta. Habla en español neutro, sin modismos locales.`
     },
     medium: {
-        emoji:'🤔', name:'Reflexivo/a', sub:'Cuestiona de forma balanceada',
+        emoji:'🤔', name:'Actitud reflexiva', sub:'Cuestiona de forma balanceada',
         system1: `Eres un miembro del equipo hablando con tu jefe o jefa directa. Tu actitud es reflexiva y algo escéptica.
 - Hablas en primera persona, de forma directa y honesta. Tienes tu propia perspectiva.
 - Cuando tu jefe propone algo, señalas UNA cosa que no te convence por turno. No aceptas respuestas vagas.
@@ -197,8 +242,8 @@ const attitudes = {
 - Máximo 2-3 líneas. Habla en español neutro, sin modismos locales.`
     },
     hard: {
-        emoji:'🎯', name:'Directo/a', sub:'Cuestiona sin filtros',
-        system1: `Eres un miembro del equipo hablando con tu jefe o jefa directa. Tu actitud es directa y exigente.
+        emoji:'🎯', name:'Actitud difícil', sub:'Cuestiona sin filtros',
+        system1: `Eres un miembro del equipo hablando con tu jefe o jefa directa. Tu actitud es difícil, desafiante y exigente.
 - Hablas en primera persona, de forma franca y sin rodeos, pero con respeto.
 - Cuando tu jefe propone algo, haces UNA pregunta directa y exigente por turno. No aceptas vaguedades.
 - "no me convence", "eso es muy vago", "¿y si no se cumple qué pasa?", "¿quién específicamente?".
@@ -208,17 +253,8 @@ const attitudes = {
     }
 };
 
-const greeting1 = {
-    easy:   "Hola, me llamaste. ¿Qué hay?",
-    medium: "Hola, me llamaste. Cuéntame.",
-    hard:   "Hola, me llamaste. ¿Qué pasa?"
-};
-
-const greeting2 = {
-    easy:   "Hola. ¿Me necesitabas?",
-    medium: "Hola. ¿Qué pasó?",
-    hard:   "Hola. Dime."
-};
+const greeting1 = { easy: "Hola, me llamaste. ¿Qué hay?", medium: "Hola, me llamaste. Cuéntame.", hard: "Hola, me llamaste. ¿Qué pasa?" };
+const greeting2 = { easy: "Hola. ¿Me necesitabas?", medium: "Hola. ¿Qué pasó?", hard: "Hola. Dime." };
 
 function buildSystem2() {
     const reason = nonComplianceReasons[Math.floor(Math.random() * nonComplianceReasons.length)];
@@ -257,6 +293,182 @@ async function callAPI(msgs, system) {
     return d.content?.[0]?.text || "...";
 }
 
+async function requestFeedback() {
+    msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
+
+    const history = phase === 1 ? history1 : history2;
+    const isPhase2 = phase === 2;
+
+    const systemPrompt = `Eres un evaluador experto en habilidades de liderazgo y comunicación. 
+Tu tarea es evaluar una conversación entre un/a jefe/a y un miembro del equipo.
+
+${isPhase2 ? 
+`CONTEXTO: Esta es una conversación de sostenimiento de acuerdo (fase 2). El colaborador no cumplió algo que había acordado.
+
+EVALÚA ESTOS ASPECTOS:
+1. Bienvenida y contexto a la conversación (0-7): ¿Inició bien? ¿Fue claro el contexto?
+2. Planteamiento del problema (0-7): ¿Presentó el problema de forma clara y específica?
+3. Impacto del problema (0-7): ¿Explicó las consecuencias o por qué importa?
+4. Transmitir requerimiento de forma clara y firme (0-7): ¿Fue directo sin ser agresivo? ¿Quedó clara la expectativa?
+5. Generación de un acuerdo explícito (0-7): ¿Cerró con compromisos concretos y verificables?
+6. Advertencia sobre siguiente paso (0-7): ¿Explicó qué pasará si no se cumple?` :
+`CONTEXTO: Esta es una conversación de construcción de acuerdo (fase 1). Se busca construir un acuerdo sólido.
+
+EVALÚA ESTOS ASPECTOS:
+1. Bienvenida y contexto a la conversación (0-7): ¿Inició bien? ¿Fue claro el contexto?
+2. Planteamiento del problema (0-7): ¿Presentó el problema de forma clara y específica?
+3. Impacto del problema (0-7): ¿Explicó las consecuencias o por qué importa?
+4. Abrir conversación para indagar qué pasó (0-7): ¿Hizo buenas preguntas? ¿Escuchó realmente?
+5. Cierre con un acuerdo explícito (0-7): ¿Cerró con compromisos concretos y verificables?`
+}
+
+INSTRUCCIONES:
+- Califica cada aspecto en escala 0-7 (7 es excelente, 0 es no existe)
+- Sé honesto pero justo. No seas condescendiente ni riguroso excesivamente.
+- Sí es posible alcanzar 7.0 si lo hace suficientemente bien
+- Para cada aspecto, da 1-2 líneas de feedback específico
+- Calcula una nota GENERAL como promedio de todas las calificaciones
+- Identifica los DOS puntos más importantes para mejorar basándote en las notas
+
+MENSAJE DE CONVERSACIÓN (evalúa solo por lo que se ve aquí):
+${history.map(m => `${m.role === 'user' ? 'JEFE' : 'COLEGA'}: ${m.content}`).join('\n')}
+
+RESPONDE EXACTAMENTE EN ESTE FORMATO JSON (sin markdown, sin explicaciones extra):
+{
+  "items": [
+    { "label": "Bienvenida y contexto a la conversación", "score": 5.5, "feedback": "Inició adecuadamente pero faltó..." },
+    { "label": "Planteamiento del problema", "score": 6, "feedback": "Fue claro al..." },
+    ...
+  ],
+  "general_score": 5.8,
+  "tip1": "Mejora: [concreción específica]",
+  "tip2": "Mejora: [concreción específica]"
+}`;
+
+    try {
+        const feedbackText = await callAPI([{ role: 'user', content: systemPrompt }], 'Eres un evaluador profesional de habilidades de comunicación y liderazgo.');
+        const feedbackData = JSON.parse(feedbackText);
+        showFeedback(feedbackData);
+    } catch (e) {
+        alert('Error al generar feedback. Intenta de nuevo.');
+        msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+    }
+}
+
+function showFeedback(data) {
+    const content = document.getElementById('feedbackContent');
+    let html = '';
+
+    data.items.forEach(item => {
+        html += `
+            <div class="score-item">
+                <div class="score-label">${item.label}</div>
+                <div class="score-number">${item.score}</div>
+                <div class="score-feedback">${item.feedback}</div>
+            </div>
+        `;
+    });
+
+    html += `
+        <div class="general-score">
+            <div class="general-label">Nota General</div>
+            <div class="general-number">${data.general_score}</div>
+        </div>
+
+        <div class="tips">
+            <div class="tips-title">💡 Tips para mejorar</div>
+            <div class="tip">1. ${data.tip1}</div>
+            <div class="tip">2. ${data.tip2}</div>
+        </div>
+    `;
+
+    content.innerHTML = html;
+
+    // Agregar botones según fase
+    const btnContainer = document.createElement('div');
+    btnContainer.style.display = 'flex';
+    btnContainer.style.gap = '10px';
+    btnContainer.style.marginTop = '16px';
+    btnContainer.style.justifyContent = 'center';
+
+    if (phase === 1) {
+        btnContainer.innerHTML = `
+            <button class="btn-secondary" onclick="repeatPhase1()" style="flex:1; padding:10px;">Hacer de nuevo</button>
+            <button class="btn-primary" onclick="moveToPhase2Check()" style="flex:1; padding:10px;">Pasar a Conversación 2</button>
+        `;
+    } else {
+        btnContainer.innerHTML = `
+            <button class="btn-secondary" onclick="repeatPhase2()" style="flex:1; padding:10px;">Hacer de nuevo</button>
+            <button class="btn-primary" onclick="endConversation()" style="flex:1; padding:10px;">Terminar</button>
+        `;
+    }
+
+    document.getElementById('feedbackContent').appendChild(btnContainer);
+    feedbackModal.classList.add('visible');
+}
+
+function closeFeedback() {
+    feedbackModal.classList.remove('visible');
+    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+    msgInput.focus();
+}
+
+function repeatPhase1() {
+    closeFeedback();
+    resetChat();
+}
+
+function repeatPhase2() {
+    closeFeedback();
+    // Reinicia fase 2 con el mismo acuerdo
+    chatArea.innerHTML = '';
+    msgInput.value = '';
+    history2 = [];
+    addDivider('Nuevo intento — Conversación 2');
+    const first = greeting2[difficulty];
+    history2.push({ role: 'assistant', content: first });
+    addMsg('bot', first);
+    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+    msgInput.focus();
+}
+
+function endConversation() {
+    closeFeedback();
+    addDivider('Conversación finalizada');
+    msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
+}
+
+function moveToPhase2Check() {
+    closeFeedback();
+    pendingAction = () => doStartPhase2();
+    confirmModal.classList.add('visible');
+    document.getElementById('confirmTitle').textContent = '¿Pasar a Conversación 2?';
+    document.getElementById('confirmMsg').textContent = 'Puedes pasar a la segunda conversación o continuar refinando esta.';
+}
+
+function closeConfirm() { confirmModal.classList.remove('visible'); pendingAction = null; }
+function confirmAction() { confirmModal.classList.remove('visible'); if (pendingAction) pendingAction(); }
+
+function doStartPhase2() {
+    phase = 2;
+    phase1Done = true;
+    sys2 = buildSystem2();
+
+    tab1.classList.remove('active'); tab1.classList.add('done');
+    tab2.classList.add('active');
+    tab2.classList.remove('clickable');
+    modeLabel.textContent = `${attitudes[difficulty].emoji} ${attitudes[difficulty].name} · Fase 2: Sostener el acuerdo`;
+
+    addDivider('Han pasado unos días — Conversación 2');
+
+    const first = greeting2[difficulty];
+    history2.push({ role: 'assistant', content: first });
+    addMsg('bot', first);
+
+    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+    msgInput.focus();
+}
+
 function showTyping() {
     const w = document.createElement('div');
     w.className = 'msg bot'; w.id = 'typing';
@@ -289,47 +501,10 @@ function addDivider(text) {
     chatArea.appendChild(d); chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-// --- MODAL ---
-function openModal() { modalOverlay.classList.add('visible'); }
-function closeModal() { modalOverlay.classList.remove('visible'); }
-function confirmPhase2() { closeModal(); doStartPhase2(); }
-
-// --- TABS ---
-function onTab2Click() {
-    if (phase === 2) return; // ya estamos en fase 2
-    if (!difficulty) return; // aún no eligió actitud
-    if (!phase1Done) {
-        openModal();
-    } else {
-        doStartPhase2();
-    }
-}
-
-function doStartPhase2() {
-    phase = 2;
-    phase1Done = true;
-    sys2 = buildSystem2();
-
-    tab1.classList.remove('active'); tab1.classList.add('done');
-    tab2.classList.add('active');
-    tab2.classList.remove('clickable');
-    modeLabel.textContent = `${attitudes[difficulty].emoji} ${attitudes[difficulty].name} · Fase 2: Sostener el acuerdo`;
-
-    addDivider('Han pasado unos días — Conversación 2');
-
-    const first = greeting2[difficulty];
-    history2.push({ role: 'assistant', content: first });
-    addMsg('bot', first);
-
-    msgInput.disabled = false;
-    sendBtn.disabled = false;
-    msgInput.focus();
-}
-
 async function sendMessage() {
     const text = msgInput.value.trim();
     if (!text) return;
-    msgInput.value = ''; msgInput.disabled = true; sendBtn.disabled = true;
+    msgInput.value = ''; msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
     addMsg('user', text);
 
     const history = phase === 1 ? history1 : history2;
@@ -344,16 +519,12 @@ async function sendMessage() {
         addMsg('bot', reply);
         history.push({ role: 'assistant', content: reply });
 
-        // Detectar fin natural de fase 1
         if (phase === 1) {
             const endPhrases = ['llevamos al equipo', 'me convence', 'podemos llevarlo', 'tiene más sentido', 'me parece bien'];
             if (endPhrases.some(p => reply.toLowerCase().includes(p))) {
                 phase1Done = true;
                 tab2.classList.add('clickable');
-                addDivider('Conversación 1 terminada — haz clic en "2 · Sostener el acuerdo" cuando quieras continuar');
-                msgInput.disabled = false;
-                sendBtn.disabled = false;
-                return;
+                addDivider('Conversación 1 terminada');
             }
         }
     } catch (e) {
@@ -361,7 +532,8 @@ async function sendMessage() {
         addMsg('bot', 'Error al conectar. Intenta de nuevo.');
     }
 
-    msgInput.disabled = false; sendBtn.disabled = false; msgInput.focus();
+    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+    msgInput.focus();
 }
 
 function selectAttitude() {
@@ -386,9 +558,8 @@ function selectAttitude() {
 function setAttitude(level) {
     difficulty = level;
     modeLabel.textContent = `${attitudes[level].emoji} ${attitudes[level].name} · Fase 1: Construir el acuerdo`;
-    // Habilitar tab2 como clickable desde el inicio
     tab2.classList.add('clickable');
-    msgInput.disabled = false; sendBtn.disabled = false;
+    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
     const first = greeting1[level];
     history1.push({ role: 'assistant', content: first });
     addMsg('bot', first);
@@ -397,7 +568,7 @@ function setAttitude(level) {
 
 function resetChat() {
     chatArea.innerHTML = ''; msgInput.value = '';
-    msgInput.disabled = true; sendBtn.disabled = true;
+    msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
     modeLabel.textContent = ''; difficulty = null;
     phase = 1; phase1Done = false;
     history1 = []; history2 = []; sys2 = null;
@@ -406,7 +577,18 @@ function resetChat() {
     selectAttitude();
 }
 
-tab2.addEventListener('click', onTab2Click);
+tab2.addEventListener('click', () => {
+    if (phase === 2 || !difficulty) return;
+    if (!phase1Done) {
+        pendingAction = () => doStartPhase2();
+        confirmModal.classList.add('visible');
+        document.getElementById('confirmTitle').textContent = '¿Pasar a la Conversación 2?';
+        document.getElementById('confirmMsg').textContent = 'La primera conversación aún no ha terminado. Puedes continuar igualmente.';
+    } else {
+        doStartPhase2();
+    }
+});
+
 msgInput.addEventListener('keypress', e => { if (e.key === 'Enter' && !msgInput.disabled) sendMessage(); });
 window.addEventListener('load', selectAttitude);
 </script>
