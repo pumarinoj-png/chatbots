@@ -425,6 +425,8 @@ function getFeedbackMessage(label, score) {
 
 function showFeedback(data) {
     const content = document.getElementById('feedbackContent');
+    content.innerHTML = ''; // Limpiar contenido anterior
+    
     let html = '';
 
     data.items.forEach(item => {
@@ -450,26 +452,34 @@ function showFeedback(data) {
         </div>
     `;
 
+    content.innerHTML = html;
+
     const btnContainer = document.createElement('div');
     btnContainer.style.display = 'flex';
     btnContainer.style.gap = '10px';
     btnContainer.style.marginTop = '16px';
     btnContainer.style.justifyContent = 'center';
+    btnContainer.style.flexWrap = 'wrap';
 
     if (phase === 1) {
         btnContainer.innerHTML = `
-            <button class="btn-secondary" onclick="repeatPhase1()" style="flex:1; padding:10px;">Hacer de nuevo</button>
-            <button class="btn-primary" onclick="moveToPhase2Check()" style="flex:1; padding:10px;">Pasar a Conv. 2</button>
+            <button class="btn-secondary" onclick="repeatPhase1()" style="flex:1; minWidth: 120px; padding:10px;">Hacer de nuevo</button>
+            <button class="btn-primary" onclick="goToPhase2FromFeedback()" style="flex:1; minWidth: 120px; padding:10px;">Pasar a Conv. 2</button>
         `;
     } else {
         btnContainer.innerHTML = `
-            <button class="btn-secondary" onclick="repeatPhase2()" style="flex:1; padding:10px;">Hacer de nuevo</button>
-            <button class="btn-primary" onclick="endConversation()" style="flex:1; padding:10px;">Terminar</button>
+            <button class="btn-secondary" onclick="repeatPhase2()" style="flex:1; minWidth: 120px; padding:10px;">Hacer de nuevo</button>
+            <button class="btn-primary" onclick="endConversation()" style="flex:1; minWidth: 120px; padding:10px;">Terminar</button>
         `;
     }
 
-    document.getElementById('feedbackContent').appendChild(btnContainer);
+    content.appendChild(btnContainer);
     feedbackModal.classList.add('visible');
+}
+
+function goToPhase2FromFeedback() {
+    closeFeedback();
+    doStartPhase2();
 }
 
 function closeFeedback() {
