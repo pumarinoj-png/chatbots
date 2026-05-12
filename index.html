@@ -328,20 +328,19 @@ async function requestFeedback() {
 
     const history = phase === 1 ? history1 : history2;
     const isPhase2 = phase === 2;
-    
-    // Limitar conversación a últimos 4 mensajes para no saturar
-    const recentHistory = history.slice(-4);
-    const conversationText = recentHistory.map(m => `${m.role === 'user' ? 'J' : 'C'}: ${m.content.substring(0, 150)}`).join('\n');
+    const conversationText = history.slice(-6).map(m => `${m.role === 'user' ? 'JEFE' : 'COLEGA'}: ${m.content.substring(0, 200)}`).join('\n');
 
     const labels = isPhase2 
-        ? ['Bienvenida', 'Problema', 'Impacto', 'Requerimiento', 'Acuerdo', 'Advertencia']
-        : ['Bienvenida', 'Problema', 'Impacto', 'Indagación', 'Acuerdo'];
+        ? ['Bienvenida y contexto','Planteamiento del problema','Impacto del problema','Transmitir requerimiento','Acuerdo explícito','Advertencia siguiente paso']
+        : ['Bienvenida y contexto','Planteamiento del problema','Impacto del problema','Indagar qué pasó','Acuerdo explícito'];
 
-    const systemPrompt = 'Eres evaluador. Responde solo JSON válido.';
-    
-    const userPrompt = `Evalúa 0-7 cada aspecto. JSON: {items:[{label,score,feedback}],general_score,tip1,tip2}
-Aspectos: ${labels.join(',')}
-Conv: ${conversationText}`;
+    const userPrompt = `Eres evaluador de liderazgo. Evalúa esta conversación del 1 al 7 en estos aspectos: ${labels.join(' / ')}.
+
+Conversación:
+${conversationText}
+
+Responde SOLO con este JSON (sin texto adicional):
+{"items":[{"label":"Bienvenida y contexto","score":4,"feedback":"texto"},{"label":"Planteamiento del problema","score":4,"feedback":"texto"}${isPhase2 ? `,{"label":"Impacto del problema","score":4,"feedback":"texto"},{"label":"Transmitir requerimiento","score":4,"feedback":"texto"},{"label":"Acuerdo explícito","score":4,"feedback":"texto"},{"label":"Advertencia siguiente paso","score":4,"feedback":"texto"}` : `,{"label":"Impacto del problema","score":4,"feedback":"texto"},{"label":"Indagar qué pasó","score":4,"feedback":"texto"},{"label":"Acuerdo explícito","score":4,"feedback":"texto"}`}],"general_score":4.0,"tip1":"tip aquí","tip2":"tip aquí"}`;
 
     try {
         const response = await fetch("/api/chat", {
@@ -349,33 +348,22 @@ Conv: ${conversationText}`;
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 model: "claude-sonnet-4-20250514",
-                max_tokens: 300,
-                system: systemPrompt,
+                max_tokens: 1000,
                 messages: [{ role: 'user', content: userPrompt }]
             })
         });
         
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
         const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        
         let text = data.content?.[0]?.text || '';
-        if (!text) throw new Error('Sin respuesta');
-        
-        // Limpiar markdown
-        text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const feedbackData = JSON.parse(text);
         showFeedback(feedbackData);
-        return;
+
     } catch (e) {
         console.error('Feedback error:', e);
+        msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+        alert('Error al generar feedback. Intenta de nuevo.');
     }
-    
-    // Si falla, mostrar error
-    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
-    alert('Error al generar feedback. Intenta de nuevo.');
 }
 
 function showFeedback(data) {
