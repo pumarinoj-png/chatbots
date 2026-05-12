@@ -329,44 +329,53 @@ async function requestFeedback() {
     const history = phase === 1 ? history1 : history2;
     const isPhase2 = phase === 2;
     
-    const conversationText = history.map(m => `${m.role === 'user' ? 'JEFE' : 'COLEGA'}: ${m.content}`).join('\n');
+    // Limitar conversación a últimos 4 mensajes para no saturar
+    const recentHistory = history.slice(-4);
+    const conversationText = recentHistory.map(m => `${m.role === 'user' ? 'J' : 'C'}: ${m.content.substring(0, 150)}`).join('\n');
 
-    const prompt = `Evalúa esta conversación en escala 0-7 en estos aspectos:
-${isPhase2 ? 
-`1. Bienvenida y contexto
-2. Planteamiento del problema
-3. Impacto del problema
-4. Transmitir requerimiento claro y firme
-5. Acuerdo explícito
-6. Advertencia siguiente paso` :
-`1. Bienvenida y contexto
-2. Planteamiento del problema
-3. Impacto del problema
-4. Indagar qué pasó
-5. Acuerdo explícito`
-}
+    const labels = isPhase2 
+        ? ['Bienvenida', 'Problema', 'Impacto', 'Requerimiento', 'Acuerdo', 'Advertencia']
+        : ['Bienvenida', 'Problema', 'Impacto', 'Indagación', 'Acuerdo'];
 
-Conversación:
-${conversationText}
-
-Para cada uno, da: puntuación (0-7), feedback corto (1-2 líneas).
-Luego nota general (promedio) y 2 tips.
-
-Responde SOLO en JSON: {"items":[{"label":"...","score":5,"feedback":"..."}],"general_score":5.0,"tip1":"...","tip2":"..."}`;
+    const systemPrompt = 'Eres evaluador. Responde solo JSON válido.';
+    
+    const userPrompt = `Evalúa 0-7 cada aspecto. JSON: {items:[{label,score,feedback}],general_score,tip1,tip2}
+Aspectos: ${labels.join(',')}
+Conv: ${conversationText}`;
 
     try {
-        const feedbackText = await callAPI([{ role: 'user', content: prompt }], 'Eres evaluador de comunicación. Responde JSON puro.');
-        let cleanText = feedbackText.trim();
-        if (cleanText.startsWith('```')) {
-            cleanText = cleanText.split('```')[1].replace('json', '').trim();
-        }
-        const feedbackData = JSON.parse(cleanText);
+        const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                model: "claude-sonnet-4-20250514",
+                max_tokens: 300,
+                system: systemPrompt,
+                messages: [{ role: 'user', content: userPrompt }]
+            })
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        let text = data.content?.[0]?.text || '';
+        if (!text) throw new Error('Sin respuesta');
+        
+        // Limpiar markdown
+        text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        
+        const feedbackData = JSON.parse(text);
         showFeedback(feedbackData);
+        return;
     } catch (e) {
-        console.error('Error:', e);
-        alert('Error al generar feedback. Intenta de nuevo.');
-        msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+        console.error('Feedback error:', e);
     }
+    
+    // Si falla, mostrar error
+    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+    alert('Error al generar feedback. Intenta de nuevo.');
 }
 
 function showFeedback(data) {
