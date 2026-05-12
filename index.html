@@ -7,7 +7,7 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -116,9 +116,9 @@
         .att-btn .name { font-size:13px; font-weight:600; color:#333; margin-bottom:3px; }
         .att-btn .sub  { font-size:11px; color:#999; }
 
-        .input-area { padding:14px 18px; border-top:1px solid #e0e0e0; display:flex; gap:10px; background:white; }
+        .input-area { padding:12px 14px; border-top:1px solid #e0e0e0; display:flex; gap:8px; background:white; flex-wrap: wrap; }
         input[type="text"] {
-            flex:1; padding:14px 16px; border:1px solid #ddd; border-radius:8px;
+            flex:1; min-width: 150px; padding:12px 14px; border:1px solid #ddd; border-radius:8px;
             font-size:15px; font-family:inherit; transition:border-color 0.2s;
         }
         input[type="text"]:focus { outline:none; border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,0.1); }
@@ -132,13 +132,14 @@
         .send-btn:hover:not(:disabled){background:#764ba2}
         .send-btn:disabled{background:#ccc;cursor:not-allowed}
         .feedback-btn {
-            padding:11px 16px; background:#f9a825; color:white; border:none;
-            border-radius:8px; font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; transition: background 0.2s;
+            padding:10px 12px; background:#f9a825; color:white; border:none;
+            border-radius:8px; font-size:12px; font-weight:500; cursor:pointer; font-family:inherit; transition: background 0.2s;
+            white-space: nowrap; flex-shrink: 0;
         }
         .feedback-btn:hover { background:#f89e0d; }
         .reset-btn {
-            padding:11px 14px; background:#f0f0f0; color:#555; border:none;
-            border-radius:8px; font-size:13px; cursor:pointer; font-family:inherit;
+            padding:10px 12px; background:#f0f0f0; color:#555; border:none;
+            border-radius:8px; font-size:12px; cursor:pointer; font-family:inherit; flex-shrink: 0;
         }
         .reset-btn:hover{background:#e0e0e0}
     </style>
@@ -150,13 +151,10 @@
     <div class="modal">
         <h3>📊 Evaluación de la conversación</h3>
         <div id="feedbackContent"></div>
-        <div class="modal-btns">
-            <button class="btn-secondary" onclick="closeFeedback()">Cerrar</button>
-        </div>
     </div>
 </div>
 
-<!-- Modal de confirmación (pasar a fase 2 o similar) -->
+<!-- Modal de confirmación -->
 <div class="confirm-modal" id="confirmModal">
     <div class="modal">
         <h3 id="confirmTitle">¿Pasar a la Conversación 2?</h3>
@@ -268,12 +266,12 @@ ${reason}
 
 CÓMO COMPORTARTE:
 - Eres una persona real. Primera persona, tono natural.
-- Al principio no admites el incumplimiento fácilmente. Puedes decir que "estabas en eso" o que "fue una semana complicada".
-- A medida que tu jefe o jefa te presiona o hace buenas preguntas, vas revelando la razón real poco a poco.
-- Si tu jefe escucha bien y propone soluciones concretas, empiezas a ceder y comprometerte de nuevo.
-- Si solo te presionan sin escucharte, te cierras un poco más.
+- Al principio no admites el incumplimiento fácilmente.
+- A medida que tu jefe o jefa te presiona o hace buenas preguntas, vas revelando la razón real.
+- Si tu jefe escucha bien y propone soluciones, empiezas a ceder.
+- Si solo te presionan sin escucharte, te cierras más.
 - Nunca uses términos de gestión. Eres un colega normal.
-- Habla en español neutro, sin modismos de ningún país.
+- Habla en español neutro, sin modismos.
 - Máximo 2-3 líneas por respuesta.`;
 }
 
@@ -291,182 +289,6 @@ async function callAPI(msgs, system) {
     const d = await r.json();
     if (d.error) throw new Error(d.error);
     return d.content?.[0]?.text || "...";
-}
-
-async function requestFeedback() {
-    msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
-
-    const history = phase === 1 ? history1 : history2;
-    const isPhase2 = phase === 2;
-
-    const systemPrompt = `Eres un evaluador experto en habilidades de liderazgo y comunicación. 
-Tu tarea es evaluar una conversación entre un/a jefe/a y un miembro del equipo.
-
-${isPhase2 ? 
-`CONTEXTO: Esta es una conversación de sostenimiento de acuerdo (fase 2). El colaborador no cumplió algo que había acordado.
-
-EVALÚA ESTOS ASPECTOS:
-1. Bienvenida y contexto a la conversación (0-7): ¿Inició bien? ¿Fue claro el contexto?
-2. Planteamiento del problema (0-7): ¿Presentó el problema de forma clara y específica?
-3. Impacto del problema (0-7): ¿Explicó las consecuencias o por qué importa?
-4. Transmitir requerimiento de forma clara y firme (0-7): ¿Fue directo sin ser agresivo? ¿Quedó clara la expectativa?
-5. Generación de un acuerdo explícito (0-7): ¿Cerró con compromisos concretos y verificables?
-6. Advertencia sobre siguiente paso (0-7): ¿Explicó qué pasará si no se cumple?` :
-`CONTEXTO: Esta es una conversación de construcción de acuerdo (fase 1). Se busca construir un acuerdo sólido.
-
-EVALÚA ESTOS ASPECTOS:
-1. Bienvenida y contexto a la conversación (0-7): ¿Inició bien? ¿Fue claro el contexto?
-2. Planteamiento del problema (0-7): ¿Presentó el problema de forma clara y específica?
-3. Impacto del problema (0-7): ¿Explicó las consecuencias o por qué importa?
-4. Abrir conversación para indagar qué pasó (0-7): ¿Hizo buenas preguntas? ¿Escuchó realmente?
-5. Cierre con un acuerdo explícito (0-7): ¿Cerró con compromisos concretos y verificables?`
-}
-
-INSTRUCCIONES:
-- Califica cada aspecto en escala 0-7 (7 es excelente, 0 es no existe)
-- Sé honesto pero justo. No seas condescendiente ni riguroso excesivamente.
-- Sí es posible alcanzar 7.0 si lo hace suficientemente bien
-- Para cada aspecto, da 1-2 líneas de feedback específico
-- Calcula una nota GENERAL como promedio de todas las calificaciones
-- Identifica los DOS puntos más importantes para mejorar basándote en las notas
-
-MENSAJE DE CONVERSACIÓN (evalúa solo por lo que se ve aquí):
-${history.map(m => `${m.role === 'user' ? 'JEFE' : 'COLEGA'}: ${m.content}`).join('\n')}
-
-RESPONDE EXACTAMENTE EN ESTE FORMATO JSON (sin markdown, sin explicaciones extra):
-{
-  "items": [
-    { "label": "Bienvenida y contexto a la conversación", "score": 5.5, "feedback": "Inició adecuadamente pero faltó..." },
-    { "label": "Planteamiento del problema", "score": 6, "feedback": "Fue claro al..." },
-    ...
-  ],
-  "general_score": 5.8,
-  "tip1": "Mejora: [concreción específica]",
-  "tip2": "Mejora: [concreción específica]"
-}`;
-
-    try {
-        const feedbackText = await callAPI([{ role: 'user', content: systemPrompt }], 'Eres un evaluador profesional de habilidades de comunicación y liderazgo.');
-        const feedbackData = JSON.parse(feedbackText);
-        showFeedback(feedbackData);
-    } catch (e) {
-        alert('Error al generar feedback. Intenta de nuevo.');
-        msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
-    }
-}
-
-function showFeedback(data) {
-    const content = document.getElementById('feedbackContent');
-    let html = '';
-
-    data.items.forEach(item => {
-        html += `
-            <div class="score-item">
-                <div class="score-label">${item.label}</div>
-                <div class="score-number">${item.score}</div>
-                <div class="score-feedback">${item.feedback}</div>
-            </div>
-        `;
-    });
-
-    html += `
-        <div class="general-score">
-            <div class="general-label">Nota General</div>
-            <div class="general-number">${data.general_score}</div>
-        </div>
-
-        <div class="tips">
-            <div class="tips-title">💡 Tips para mejorar</div>
-            <div class="tip">1. ${data.tip1}</div>
-            <div class="tip">2. ${data.tip2}</div>
-        </div>
-    `;
-
-    content.innerHTML = html;
-
-    // Agregar botones según fase
-    const btnContainer = document.createElement('div');
-    btnContainer.style.display = 'flex';
-    btnContainer.style.gap = '10px';
-    btnContainer.style.marginTop = '16px';
-    btnContainer.style.justifyContent = 'center';
-
-    if (phase === 1) {
-        btnContainer.innerHTML = `
-            <button class="btn-secondary" onclick="repeatPhase1()" style="flex:1; padding:10px;">Hacer de nuevo</button>
-            <button class="btn-primary" onclick="moveToPhase2Check()" style="flex:1; padding:10px;">Pasar a Conversación 2</button>
-        `;
-    } else {
-        btnContainer.innerHTML = `
-            <button class="btn-secondary" onclick="repeatPhase2()" style="flex:1; padding:10px;">Hacer de nuevo</button>
-            <button class="btn-primary" onclick="endConversation()" style="flex:1; padding:10px;">Terminar</button>
-        `;
-    }
-
-    document.getElementById('feedbackContent').appendChild(btnContainer);
-    feedbackModal.classList.add('visible');
-}
-
-function closeFeedback() {
-    feedbackModal.classList.remove('visible');
-    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
-    msgInput.focus();
-}
-
-function repeatPhase1() {
-    closeFeedback();
-    resetChat();
-}
-
-function repeatPhase2() {
-    closeFeedback();
-    // Reinicia fase 2 con el mismo acuerdo
-    chatArea.innerHTML = '';
-    msgInput.value = '';
-    history2 = [];
-    addDivider('Nuevo intento — Conversación 2');
-    const first = greeting2[difficulty];
-    history2.push({ role: 'assistant', content: first });
-    addMsg('bot', first);
-    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
-    msgInput.focus();
-}
-
-function endConversation() {
-    closeFeedback();
-    addDivider('Conversación finalizada');
-    msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
-}
-
-function moveToPhase2Check() {
-    closeFeedback();
-    pendingAction = () => doStartPhase2();
-    confirmModal.classList.add('visible');
-    document.getElementById('confirmTitle').textContent = '¿Pasar a Conversación 2?';
-    document.getElementById('confirmMsg').textContent = 'Puedes pasar a la segunda conversación o continuar refinando esta.';
-}
-
-function closeConfirm() { confirmModal.classList.remove('visible'); pendingAction = null; }
-function confirmAction() { confirmModal.classList.remove('visible'); if (pendingAction) pendingAction(); }
-
-function doStartPhase2() {
-    phase = 2;
-    phase1Done = true;
-    sys2 = buildSystem2();
-
-    tab1.classList.remove('active'); tab1.classList.add('done');
-    tab2.classList.add('active');
-    tab2.classList.remove('clickable');
-    modeLabel.textContent = `${attitudes[difficulty].emoji} ${attitudes[difficulty].name} · Fase 2: Sostener el acuerdo`;
-
-    addDivider('Han pasado unos días — Conversación 2');
-
-    const first = greeting2[difficulty];
-    history2.push({ role: 'assistant', content: first });
-    addMsg('bot', first);
-
-    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
-    msgInput.focus();
 }
 
 function showTyping() {
@@ -499,6 +321,210 @@ function addDivider(text) {
     d.className = 'divider';
     d.innerHTML = `<hr><span>${text}</span><hr>`;
     chatArea.appendChild(d); chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function requestFeedback() {
+    msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
+    
+    const history = phase === 1 ? history1 : history2;
+    const isPhase2 = phase === 2;
+    
+    const scores = {};
+    const fullText = history.map(m => m.content.toLowerCase()).join(' ');
+    
+    // Evaluar cada criterio
+    scores['Bienvenida y contexto'] = evaluateWelcome(fullText);
+    scores['Planteamiento del problema'] = evaluateProblem(fullText);
+    scores['Impacto del problema'] = evaluateImpact(fullText);
+    
+    if (isPhase2) {
+        scores['Transmitir requerimiento claro'] = evaluateRequirement(fullText);
+        scores['Acuerdo explícito'] = evaluateAgreement(fullText);
+        scores['Advertencia siguiente paso'] = evaluateWarning(fullText);
+    } else {
+        scores['Indagar qué pasó'] = evaluateInquiry(fullText);
+        scores['Acuerdo explícito'] = evaluateAgreement(fullText);
+    }
+    
+    const scoreValues = Object.values(scores);
+    const generalScore = (scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length).toFixed(1);
+    
+    const feedbackData = {
+        items: Object.entries(scores).map(([label, score]) => ({
+            label,
+            score: parseFloat(score.toFixed(1)),
+            feedback: getFeedbackMessage(label, score)
+        })),
+        general_score: parseFloat(generalScore),
+        tip1: 'Mejora: Haz preguntas más abiertas para entender mejor la perspectiva.',
+        tip2: 'Mejora: Cierra siempre con compromisos específicos y fechas claras.'
+    };
+    
+    showFeedback(feedbackData);
+}
+
+function evaluateWelcome(text) {
+    let score = 2;
+    if (text.includes('hola')) score += 1.5;
+    if (text.includes('llamaste')) score += 1.5;
+    if (text.includes('cuéntame') || text.includes('qué hay')) score += 1;
+    return Math.min(score, 7);
+}
+
+function evaluateProblem(text) {
+    let score = 2;
+    if (text.includes('problema') || text.includes('tema')) score += 1.5;
+    if (text.includes('conflicto') || text.includes('situación')) score += 1;
+    if (text.includes('?')) score += 1;
+    return Math.min(score, 7);
+}
+
+function evaluateImpact(text) {
+    let score = 2;
+    if (text.includes('impacto') || text.includes('consecuencia')) score += 2;
+    if (text.includes('afecta') || text.includes('importa')) score += 1.5;
+    return Math.min(score, 7);
+}
+
+function evaluateInquiry(text) {
+    let score = 2;
+    if (text.includes('?')) score += 2;
+    if (text.includes('entiendo') || text.includes('por qué')) score += 1.5;
+    if (text.includes('cuál') || text.includes('cómo')) score += 1;
+    return Math.min(score, 7);
+}
+
+function evaluateRequirement(text) {
+    let score = 2;
+    if (text.includes('necesito') || text.includes('debo')) score += 1.5;
+    if (text.includes('se espera') || text.includes('requerimiento')) score += 1.5;
+    if (text.includes('claro') || text.includes('específico')) score += 1;
+    return Math.min(score, 7);
+}
+
+function evaluateAgreement(text) {
+    let score = 2;
+    if (text.includes('acuerdo') || text.includes('ok')) score += 1.5;
+    if (text.includes('comprometerse') || text.includes('parece bien')) score += 1.5;
+    if (text.includes('está claro')) score += 1;
+    return Math.min(score, 7);
+}
+
+function evaluateWarning(text) {
+    let score = 2;
+    if (text.includes('próximo paso') || text.includes('siguiente')) score += 1.5;
+    if (text.includes('si no cumples') || text.includes('consecuencia')) score += 2;
+    return Math.min(score, 7);
+}
+
+function getFeedbackMessage(label, score) {
+    if (score >= 5.5) return 'Muy bien en este aspecto.';
+    if (score >= 4) return 'Estuvo adecuado, puede mejorar.';
+    return 'Necesita más desarrollo aquí.';
+}
+
+function showFeedback(data) {
+    const content = document.getElementById('feedbackContent');
+    let html = '';
+
+    data.items.forEach(item => {
+        html += `
+            <div class="score-item">
+                <div class="score-label">${item.label}</div>
+                <div class="score-number">${item.score}</div>
+                <div class="score-feedback">${item.feedback}</div>
+            </div>
+        `;
+    });
+
+    html += `
+        <div class="general-score">
+            <div class="general-label">Nota General</div>
+            <div class="general-number">${data.general_score}</div>
+        </div>
+
+        <div class="tips">
+            <div class="tips-title">💡 Tips para mejorar</div>
+            <div class="tip">1. ${data.tip1}</div>
+            <div class="tip">2. ${data.tip2}</div>
+        </div>
+    `;
+
+    const btnContainer = document.createElement('div');
+    btnContainer.style.display = 'flex';
+    btnContainer.style.gap = '10px';
+    btnContainer.style.marginTop = '16px';
+    btnContainer.style.justifyContent = 'center';
+
+    if (phase === 1) {
+        btnContainer.innerHTML = `
+            <button class="btn-secondary" onclick="repeatPhase1()" style="flex:1; padding:10px;">Hacer de nuevo</button>
+            <button class="btn-primary" onclick="moveToPhase2Check()" style="flex:1; padding:10px;">Pasar a Conv. 2</button>
+        `;
+    } else {
+        btnContainer.innerHTML = `
+            <button class="btn-secondary" onclick="repeatPhase2()" style="flex:1; padding:10px;">Hacer de nuevo</button>
+            <button class="btn-primary" onclick="endConversation()" style="flex:1; padding:10px;">Terminar</button>
+        `;
+    }
+
+    document.getElementById('feedbackContent').appendChild(btnContainer);
+    feedbackModal.classList.add('visible');
+}
+
+function closeFeedback() {
+    feedbackModal.classList.remove('visible');
+    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+    msgInput.focus();
+}
+
+function repeatPhase1() { closeFeedback(); resetChat(); }
+function repeatPhase2() {
+    closeFeedback();
+    chatArea.innerHTML = '';
+    msgInput.value = '';
+    history2 = [];
+    addDivider('Nuevo intento — Conversación 2');
+    const first = greeting2[difficulty];
+    history2.push({ role: 'assistant', content: first });
+    addMsg('bot', first);
+    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+    msgInput.focus();
+}
+function endConversation() {
+    closeFeedback();
+    addDivider('Conversación finalizada');
+    msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
+}
+function moveToPhase2Check() {
+    closeFeedback();
+    pendingAction = () => doStartPhase2();
+    confirmModal.classList.add('visible');
+    document.getElementById('confirmTitle').textContent = '¿Pasar a Conversación 2?';
+    document.getElementById('confirmMsg').textContent = 'Puedes pasar a la siguiente o continuar refinando.';
+}
+
+function closeConfirm() { confirmModal.classList.remove('visible'); pendingAction = null; }
+function confirmAction() { confirmModal.classList.remove('visible'); if (pendingAction) pendingAction(); }
+
+function doStartPhase2() {
+    phase = 2;
+    phase1Done = true;
+    sys2 = buildSystem2();
+
+    tab1.classList.remove('active'); tab1.classList.add('done');
+    tab2.classList.add('active');
+    tab2.classList.remove('clickable');
+    modeLabel.textContent = `${attitudes[difficulty].emoji} ${attitudes[difficulty].name} · Fase 2: Sostener el acuerdo`;
+
+    addDivider('Han pasado unos días — Conversación 2');
+
+    const first = greeting2[difficulty];
+    history2.push({ role: 'assistant', content: first });
+    addMsg('bot', first);
+
+    msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
+    msgInput.focus();
 }
 
 async function sendMessage() {
