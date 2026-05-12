@@ -323,104 +323,50 @@ function addDivider(text) {
     chatArea.appendChild(d); chatArea.scrollTop = chatArea.scrollHeight;
 }
 
-function requestFeedback() {
+async function requestFeedback() {
     msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
-    
+
     const history = phase === 1 ? history1 : history2;
     const isPhase2 = phase === 2;
     
-    const scores = {};
-    const fullText = history.map(m => m.content.toLowerCase()).join(' ');
-    
-    // Evaluar cada criterio
-    scores['Bienvenida y contexto'] = evaluateWelcome(fullText);
-    scores['Planteamiento del problema'] = evaluateProblem(fullText);
-    scores['Impacto del problema'] = evaluateImpact(fullText);
-    
-    if (isPhase2) {
-        scores['Transmitir requerimiento claro'] = evaluateRequirement(fullText);
-        scores['Acuerdo explícito'] = evaluateAgreement(fullText);
-        scores['Advertencia siguiente paso'] = evaluateWarning(fullText);
-    } else {
-        scores['Indagar qué pasó'] = evaluateInquiry(fullText);
-        scores['Acuerdo explícito'] = evaluateAgreement(fullText);
+    const conversationText = history.map(m => `${m.role === 'user' ? 'JEFE' : 'COLEGA'}: ${m.content}`).join('\n');
+
+    const prompt = `Evalúa esta conversación en escala 0-7 en estos aspectos:
+${isPhase2 ? 
+`1. Bienvenida y contexto
+2. Planteamiento del problema
+3. Impacto del problema
+4. Transmitir requerimiento claro y firme
+5. Acuerdo explícito
+6. Advertencia siguiente paso` :
+`1. Bienvenida y contexto
+2. Planteamiento del problema
+3. Impacto del problema
+4. Indagar qué pasó
+5. Acuerdo explícito`
+}
+
+Conversación:
+${conversationText}
+
+Para cada uno, da: puntuación (0-7), feedback corto (1-2 líneas).
+Luego nota general (promedio) y 2 tips.
+
+Responde SOLO en JSON: {"items":[{"label":"...","score":5,"feedback":"..."}],"general_score":5.0,"tip1":"...","tip2":"..."}`;
+
+    try {
+        const feedbackText = await callAPI([{ role: 'user', content: prompt }], 'Eres evaluador de comunicación. Responde JSON puro.');
+        let cleanText = feedbackText.trim();
+        if (cleanText.startsWith('```')) {
+            cleanText = cleanText.split('```')[1].replace('json', '').trim();
+        }
+        const feedbackData = JSON.parse(cleanText);
+        showFeedback(feedbackData);
+    } catch (e) {
+        console.error('Error:', e);
+        alert('Error al generar feedback. Intenta de nuevo.');
+        msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
     }
-    
-    const scoreValues = Object.values(scores);
-    const generalScore = (scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length).toFixed(1);
-    
-    const feedbackData = {
-        items: Object.entries(scores).map(([label, score]) => ({
-            label,
-            score: parseFloat(score.toFixed(1)),
-            feedback: getFeedbackMessage(label, score)
-        })),
-        general_score: parseFloat(generalScore),
-        tip1: 'Mejora: Haz preguntas más abiertas para entender mejor la perspectiva.',
-        tip2: 'Mejora: Cierra siempre con compromisos específicos y fechas claras.'
-    };
-    
-    showFeedback(feedbackData);
-}
-
-function evaluateWelcome(text) {
-    let score = 2;
-    if (text.includes('hola')) score += 1.5;
-    if (text.includes('llamaste')) score += 1.5;
-    if (text.includes('cuéntame') || text.includes('qué hay')) score += 1;
-    return Math.min(score, 7);
-}
-
-function evaluateProblem(text) {
-    let score = 2;
-    if (text.includes('problema') || text.includes('tema')) score += 1.5;
-    if (text.includes('conflicto') || text.includes('situación')) score += 1;
-    if (text.includes('?')) score += 1;
-    return Math.min(score, 7);
-}
-
-function evaluateImpact(text) {
-    let score = 2;
-    if (text.includes('impacto') || text.includes('consecuencia')) score += 2;
-    if (text.includes('afecta') || text.includes('importa')) score += 1.5;
-    return Math.min(score, 7);
-}
-
-function evaluateInquiry(text) {
-    let score = 2;
-    if (text.includes('?')) score += 2;
-    if (text.includes('entiendo') || text.includes('por qué')) score += 1.5;
-    if (text.includes('cuál') || text.includes('cómo')) score += 1;
-    return Math.min(score, 7);
-}
-
-function evaluateRequirement(text) {
-    let score = 2;
-    if (text.includes('necesito') || text.includes('debo')) score += 1.5;
-    if (text.includes('se espera') || text.includes('requerimiento')) score += 1.5;
-    if (text.includes('claro') || text.includes('específico')) score += 1;
-    return Math.min(score, 7);
-}
-
-function evaluateAgreement(text) {
-    let score = 2;
-    if (text.includes('acuerdo') || text.includes('ok')) score += 1.5;
-    if (text.includes('comprometerse') || text.includes('parece bien')) score += 1.5;
-    if (text.includes('está claro')) score += 1;
-    return Math.min(score, 7);
-}
-
-function evaluateWarning(text) {
-    let score = 2;
-    if (text.includes('próximo paso') || text.includes('siguiente')) score += 1.5;
-    if (text.includes('si no cumples') || text.includes('consecuencia')) score += 2;
-    return Math.min(score, 7);
-}
-
-function getFeedbackMessage(label, score) {
-    if (score >= 5.5) return 'Muy bien en este aspecto.';
-    if (score >= 4) return 'Estuvo adecuado, puede mejorar.';
-    return 'Necesita más desarrollo aquí.';
 }
 
 function showFeedback(data) {
