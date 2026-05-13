@@ -326,6 +326,10 @@ function addDivider(text) {
 }
 
 async function requestFeedback() {
+    // Prevenir doble click
+    if (feedbackBtn.dataset.loading === 'true') return;
+    feedbackBtn.dataset.loading = 'true';
+    feedbackBtn.textContent = '⏳ Evaluando...';
     msgInput.disabled = true; sendBtn.disabled = true; feedbackBtn.disabled = true;
 
     const history = phase === 1 ? history1 : history2;
@@ -381,10 +385,14 @@ Responde ÚNICAMENTE con JSON válido, sin texto antes ni después, sin markdown
         let text = data.content?.[0]?.text || '';
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const feedbackData = JSON.parse(text);
+        feedbackBtn.dataset.loading = 'false';
+        feedbackBtn.textContent = '📊 Evaluar';
         showFeedback(feedbackData);
 
     } catch (e) {
         console.error('Feedback error:', e);
+        feedbackBtn.dataset.loading = 'false';
+        feedbackBtn.textContent = '📊 Evaluar';
         msgInput.disabled = false; sendBtn.disabled = false; feedbackBtn.disabled = false;
         alert('Error al generar feedback. Intenta de nuevo.');
     }
