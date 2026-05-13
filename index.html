@@ -328,19 +328,42 @@ async function requestFeedback() {
 
     const history = phase === 1 ? history1 : history2;
     const isPhase2 = phase === 2;
-    const conversationText = history.slice(-6).map(m => `${m.role === 'user' ? 'JEFE' : 'COLEGA'}: ${m.content.substring(0, 200)}`).join('\n');
+    const conversationText = history.map(m => `${m.role === 'user' ? 'JEFE' : 'COLEGA'}: ${m.content}`).join('\n');
 
-    const labels = isPhase2 
-        ? ['Bienvenida y contexto','Planteamiento del problema','Impacto del problema','Transmitir requerimiento','Acuerdo explícito','Advertencia siguiente paso']
-        : ['Bienvenida y contexto','Planteamiento del problema','Impacto del problema','Indagar qué pasó','Acuerdo explícito'];
+    const criterios = isPhase2
+        ? `1. Bienvenida y contexto a la conversación: ¿El jefe abrió bien la conversación? ¿Fue clara la razón por la que se reunieron?
+2. Planteamiento del problema: ¿Explicó de forma clara y específica cuál es el incumplimiento o problema?
+3. Impacto del problema: ¿Explicó por qué importa, qué consecuencias tiene que no se haya cumplido?
+4. Transmitir requerimiento de forma clara y firme: ¿Dejó claro lo que se espera? ¿Fue directo sin ser agresivo? ¿Puso un límite concreto?
+5. Generación de un acuerdo explícito: ¿Cerró con compromisos concretos, verificables y con seguimiento?
+6. Advertencia sobre siguiente paso en caso de no cumplimiento: ¿Explicó qué pasará si no se cumple? ¿Fue claro el siguiente paso?`
+        : `1. Bienvenida y contexto a la conversación: ¿El jefe abrió bien la conversación? ¿Fue clara la razón por la que se reunieron?
+2. Planteamiento del problema: ¿Describió el problema de forma clara y específica?
+3. Impacto del problema: ¿Explicó por qué importa resolver esto, qué consecuencias tiene?
+4. Abrir conversación para indagar qué pasó: ¿Hizo preguntas abiertas? ¿Escuchó activamente? ¿Buscó entender la perspectiva del otro antes de proponer soluciones?
+5. Cierre con un acuerdo explícito: ¿Cerró con compromisos concretos, medibles y verificables? ¿Quedó claro quién hace qué y cuándo?`;
 
-    const userPrompt = `Eres evaluador de liderazgo. Evalúa esta conversación del 1 al 7 en estos aspectos: ${labels.join(' / ')}.
+    const userPrompt = `Eres un evaluador experto en habilidades de liderazgo y comunicación.
 
-Conversación:
+Evalúa lo que hizo el JEFE en esta conversación según estos criterios (escala 1.0 a 7.0):
+
+${criterios}
+
+REGLAS DE EVALUACIÓN:
+- Evalúa SOLO lo que el JEFE dijo en la conversación. Ignora lo que dijo el COLEGA.
+- Si el jefe NO abordó un criterio, la nota debe ser entre 1.0 y 3.0.
+- Si lo abordó parcialmente, entre 3.0 y 5.0.
+- Si lo hizo bien y completo, entre 5.0 y 7.0. Es posible llegar a 7.0.
+- Sé honesto pero justo. No seas condescendiente ni excesivamente exigente.
+- El feedback de cada criterio debe ser específico: menciona qué dijo o no dijo el jefe exactamente.
+- La nota general es el promedio de todos los criterios.
+- Los 2 tips deben ser concretos y basados en los criterios con peor nota.
+
+CONVERSACIÓN:
 ${conversationText}
 
-Responde SOLO con este JSON (sin texto adicional):
-{"items":[{"label":"Bienvenida y contexto","score":4,"feedback":"texto"},{"label":"Planteamiento del problema","score":4,"feedback":"texto"}${isPhase2 ? `,{"label":"Impacto del problema","score":4,"feedback":"texto"},{"label":"Transmitir requerimiento","score":4,"feedback":"texto"},{"label":"Acuerdo explícito","score":4,"feedback":"texto"},{"label":"Advertencia siguiente paso","score":4,"feedback":"texto"}` : `,{"label":"Impacto del problema","score":4,"feedback":"texto"},{"label":"Indagar qué pasó","score":4,"feedback":"texto"},{"label":"Acuerdo explícito","score":4,"feedback":"texto"}`}],"general_score":4.0,"tip1":"tip aquí","tip2":"tip aquí"}`;
+Responde ÚNICAMENTE con JSON válido, sin texto antes ni después, sin markdown:
+{"items":[{"label":"nombre exacto del criterio","score":X.X,"feedback":"feedback específico"}],"general_score":X.X,"tip1":"tip concreto","tip2":"tip concreto"}`;
 
     try {
         const response = await fetch("/api/chat", {
