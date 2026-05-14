@@ -6,6 +6,9 @@
     <title>Conversación con el Equipo</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
+        html, body {
+            overscroll-behavior-y: contain; /* Bloquea pull-to-refresh en móvil */
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -64,13 +67,16 @@
         .modal-overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.4); z-index: 100;
-            align-items: center; justify-content: center; overflow-y: auto;
+            align-items: flex-start; justify-content: center;
+            overflow-y: auto; padding: 16px;
         }
         .modal-overlay.visible { display: flex; }
         .modal {
-            background: white; border-radius: 12px; padding: 28px 32px;
-            max-width: 420px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-            margin: 20px auto;
+            background: white; border-radius: 12px; padding: 24px 20px;
+            max-width: 420px; width: 100%;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            margin: auto;
+            max-height: none;
         }
         .modal h3 { font-size: 16px; color: #333; margin-bottom: 16px; }
         .score-item { margin-bottom: 16px; }
@@ -349,26 +355,25 @@ async function requestFeedback() {
 4. Abrir conversación para indagar qué pasó: ¿Hizo preguntas abiertas? ¿Escuchó activamente? ¿Buscó entender la perspectiva del otro antes de proponer soluciones?
 5. Cierre con un acuerdo explícito: ¿Cerró con compromisos concretos, medibles y verificables? ¿Quedó claro quién hace qué y cuándo?`;
 
-    const userPrompt = `Eres un evaluador experto en habilidades de liderazgo y comunicación.
+    const userPrompt = `Eres un coach de liderazgo que da feedback a jefaturas sobre sus conversaciones de equipo.
 
-Evalúa lo que hizo el JEFE en esta conversación según estos criterios (escala 1.0 a 7.0):
+Evalúa lo que hizo el JEFE en esta conversación según estos criterios:
 
 ${criterios}
 
-REGLAS DE EVALUACIÓN:
-- Evalúa SOLO lo que el JEFE dijo en la conversación. Ignora lo que dijo el COLEGA.
-- Evalúa cada punto de evaluación con nota 1.0 a 7.0 y utiliza criterio: logra generar claridad o cumplir el paso? 
-- Entregale un feedback que les sirva para mejorar.
-- El feedback de cada criterio debe ser específico: menciona qué hizo que no es lo positivo o bien, sugiérele cómo podría ser mejor..
-- Considera que una nota bajo 4.0 es equivalente a una reprobación y la conversación es deficiente. Sobre 4.0, es aceptable y mientras mejor sea, más se acerca al 7.0
-- La nota general es el promedio de todos los criterios.
-- Los 2 tips deben ser concretos y basados en los criterios con peor nota.
+REGLAS:
+- Evalúa SOLO lo que el JEFE dijo. Ignora al COLEGA.
+- Para cada criterio escribe 2-3 líneas de feedback narrativo y directo. Sin notas ni calificativos como "bien" o "insuficiente".
+- Menciona específicamente qué hizo el jefe, qué funcionó y qué podría mejorar. Si no abordó algo, dilo directamente pero con tono constructivo.
+- No seas excesivamente exigente. Si lo intentó aunque sea parcialmente, reconócelo.
+- El feedback general es un párrafo corto que resume la conversación completa.
+- Los 2 tips son consejos prácticos y concretos para la próxima vez.
 
 CONVERSACIÓN:
 ${conversationText}
 
 Responde ÚNICAMENTE con JSON válido, sin texto antes ni después, sin markdown:
-{"items":[{"label":"nombre exacto del criterio","score":X.X,"feedback":"feedback específico"}],"general_score":X.X,"tip1":"tip concreto","tip2":"tip concreto"}`;
+{"items":[{"label":"nombre exacto del criterio","feedback":"texto narrativo"}],"general_feedback":"párrafo resumen","tip1":"consejo concreto","tip2":"consejo concreto"}`;
 
     try {
         const response = await fetch("/api/chat", {
@@ -400,7 +405,7 @@ Responde ÚNICAMENTE con JSON válido, sin texto antes ni después, sin markdown
 
 function showFeedback(data) {
     const content = document.getElementById('feedbackContent');
-    content.innerHTML = ''; // Limpiar contenido anterior
+    content.innerHTML = '';
     
     let html = '';
 
@@ -408,7 +413,6 @@ function showFeedback(data) {
         html += `
             <div class="score-item">
                 <div class="score-label">${item.label}</div>
-                <div class="score-number">${item.score}</div>
                 <div class="score-feedback">${item.feedback}</div>
             </div>
         `;
@@ -416,12 +420,12 @@ function showFeedback(data) {
 
     html += `
         <div class="general-score">
-            <div class="general-label">Nota General</div>
-            <div class="general-number">${data.general_score}</div>
+            <div class="general-label">En general</div>
+            <div style="font-size:13px; color:#555; line-height:1.6; margin-top:6px;">${data.general_feedback}</div>
         </div>
 
         <div class="tips">
-            <div class="tips-title">💡 Tips para mejorar</div>
+            <div class="tips-title">💡 Para la próxima vez</div>
             <div class="tip">1. ${data.tip1}</div>
             <div class="tip">2. ${data.tip2}</div>
         </div>
