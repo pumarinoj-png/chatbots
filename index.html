@@ -388,7 +388,14 @@ Responde ÚNICAMENTE con JSON válido, sin texto antes ni después, sin markdown
         
         const data = await response.json();
         let text = data.content?.[0]?.text || '';
+        
+        // Limpiar cualquier markdown o texto extra
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        // Extraer solo el JSON si hay texto alrededor
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) text = jsonMatch[0];
+        
         const feedbackData = JSON.parse(text);
         feedbackBtn.dataset.loading = 'false';
         feedbackBtn.textContent = '📊 Evaluar';
